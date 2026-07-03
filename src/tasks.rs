@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct TodoItem {
     pub title: String,
     pub status: TodoStatus,
+    pub title_state: TodoTitleState,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -18,4 +19,10 @@ pub enum TodoFilter {
 pub enum TodoStatus {
     Active,
     Completed,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum TodoTitleState {
+    Viewing,
+    Editing,
 }

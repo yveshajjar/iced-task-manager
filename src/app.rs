@@ -8,7 +8,8 @@ use iced::{Element, Subscription, Task, Vector};
 use tracing_subscriber::filter;
 
 use crate::app::AppMessage::AddTodo;
-use crate::tasks::TodoStatus;
+use crate::tasks::TodoTitleState::{Editing, Viewing};
+use crate::tasks::{TodoStatus, TodoTitleState};
 use crate::widgets::filter_bar::filter_bar;
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::todo_card::todo_card;
@@ -27,7 +28,9 @@ pub struct App {
 
     // Task properties
     todos: Vec<TodoItem>,
-    todo_input: String,
+    todo_input_buffer: String,
+    todo_edit_buffer: String,
+    old_todo_title: String,
 
     // Filter properties
     todo_filter: TodoFilter,
@@ -42,8 +45,14 @@ pub enum AppMessage {
 
     AddTodo,
     TodoInputChanged(String),
-    TodoToggled(usize, TodoStatus), // (index, completed)
-    DeleteTodo(usize),              // index
+    TodoToggled(usize, TodoStatus),
+
+    ShowTodoEdit(usize),
+    TodoEditChanged(String),
+    EditTodo(usize),
+    CancelEditTodo(usize),
+
+    DeleteTodo(usize), // index
     TodoFilterChanged(TodoFilter),
 }
 
@@ -62,8 +71,10 @@ impl App {
                 window_ratio: 1.0,
                 window_size: Vector::new(800.0, 600.0),
                 todos: storage::load_todos(),
-                todo_input: String::new(),
+                todo_input_buffer: String::new(),
                 todo_filter: TodoFilter::All,
+                todo_edit_buffer: String::new(),
+                old_todo_title: String::new(),
             },
             // Use batch to run both tasks
             Task::batch([open.map(AppMessage::AppStart), max]),
@@ -83,22 +94,23 @@ impl App {
                 Task::none()
             }
             AddTodo => {
-                if self.todo_input.trim().is_empty() {
+                if self.todo_input_buffer.trim().is_empty() {
                     return Task::none();
                 }
 
                 self.todos.push(TodoItem {
-                    title: self.todo_input.clone(),
+                    title: self.todo_input_buffer.clone(),
                     status: TodoStatus::Active,
+                    title_state: Viewing,
                 });
-                self.todo_input.clear();
+                self.todo_input_buffer.clear();
 
                 storage::save_todos(&self.todos);
 
                 Task::none()
             }
             TodoInputChanged(input) => {
-                self.todo_input = input;
+                self.todo_input_buffer = input;
                 Task::none()
             }
             TodoToggled(index, status) => {
@@ -106,6 +118,42 @@ impl App {
                 todo.status = status;
 
                 storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            ShowTodoEdit(index) => {
+                let todo = &mut self.todos[index];
+
+                self.old_todo_title = todo.title.clone();
+                todo.title_state = TodoTitleState::Editing;
+
+                Task::none()
+            }
+            TodoEditChanged(title) => {
+                self.todo_edit_buffer = title;
+
+                Task::none()
+            }
+            EditTodo(index) => {
+                let todo = &mut self.todos[index];
+
+                todo.title = self.todo_edit_buffer.clone();
+
+                self.todo_edit_buffer.clear();
+                self.old_todo_title.clear();
+                todo.title_state = TodoTitleState::Viewing;
+
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            CancelEditTodo(usize) => {
+                let todo = &mut self.todos[usize];
+
+                todo.title = self.old_todo_title.clone();
+                self.todo_edit_buffer.clear();
+                self.old_todo_title.clear();
+                todo.title_state = TodoTitleState::Viewing;
 
                 Task::none()
             }
@@ -159,7 +207,7 @@ impl App {
                 TodoFilter::Active => todo.status == TodoStatus::Active,
                 TodoFilter::Completed => todo.status == TodoStatus::Completed,
             })
-            .map(|(index, todo)| todo_card(todo, index, self.window_ratio));
+            .map(|(index, todo)| todo_card(todo, index, self.window_ratio, &self.todo_edit_buffer));
 
         let todos_cards = column(todos_list)
             .spacing(2.0 * self.window_ratio)
@@ -173,7 +221,7 @@ impl App {
 
         let filter_bar = filter_bar(self.window_ratio);
 
-        let input_bar = input_bar(&self.todo_input, self.window_ratio);
+        let input_bar = input_bar(&self.todo_input_buffer, self.window_ratio);
 
         let todos_card = container(
             column![input_bar, filter_bar, scrollable]
