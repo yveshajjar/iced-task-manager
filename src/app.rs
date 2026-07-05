@@ -12,6 +12,7 @@ use crate::tasks::TodoTitleState::{Editing, Viewing};
 use crate::tasks::{TodoStatus, TodoTitleState};
 use crate::widgets::filter_bar::filter_bar;
 use crate::widgets::input_bar::input_bar;
+use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
 
 use super::storage;
@@ -54,6 +55,8 @@ pub enum AppMessage {
 
     DeleteTodo(usize), // index
     TodoFilterChanged(TodoFilter),
+
+    SettingsPressed,
 }
 
 #[derive(Debug)]
@@ -82,7 +85,7 @@ impl App {
     }
 
     pub fn title(&self, _window: iced::window::Id) -> String {
-        "Task Manager".into()
+        "Iced Tasks".into()
     }
 
     fn update(&mut self, msg: AppMessage) -> Task<AppMessage> {
@@ -183,6 +186,7 @@ impl App {
                 self.todo_filter = filter;
                 Task::none()
             }
+            SettingsPressed => Task::none(),
         }
     }
 
@@ -198,7 +202,7 @@ impl App {
     fn view(&self, _window_id: iced::window::Id) -> Element<'_, AppMessage> {
         use View::*;
 
-        let todos_list = self
+        let todos_list: Vec<_> = self
             .todos
             .iter()
             .enumerate()
@@ -207,32 +211,69 @@ impl App {
                 TodoFilter::Active => todo.status == TodoStatus::Active,
                 TodoFilter::Completed => todo.status == TodoStatus::Completed,
             })
-            .map(|(index, todo)| todo_card(todo, index, self.window_ratio, &self.todo_edit_buffer));
+            .map(|(index, todo)| todo_card(todo, index, self.window_ratio, &self.todo_edit_buffer))
+            .collect();
 
-        let todos_cards = column(todos_list)
+        let todos_liste_len = todos_list.len();
+
+        let todos_column = column(todos_list)
             .spacing(2.0 * self.window_ratio)
             .width(Length::Fixed(320.0 * self.window_ratio))
             .height(Length::Fill);
 
-        let scrollable = iced::widget::scrollable(todos_cards)
+        let todos_scrollable = iced::widget::scrollable(todos_column)
             .width(Length::Fixed(370.0 * self.window_ratio))
             .height(Length::Fixed(460.0 * self.window_ratio))
             .style(scrollable_style);
 
-        let filter_bar = filter_bar(self.window_ratio);
+        let filter_bar = filter_bar(self.window_ratio, &self.todo_filter);
 
         let input_bar = input_bar(&self.todo_input_buffer, self.window_ratio);
 
-        let todos_card = container(
-            column![input_bar, filter_bar, scrollable]
-                .width(Length::Fill)
-                .align_x(iced::alignment::Horizontal::Center)
-                .spacing(18.0 * self.window_ratio),
+        let empty_text = match self.todo_filter {
+            TodoFilter::All => "No todos yet. Add your first task above.",
+            TodoFilter::Active => "No active todos.",
+            TodoFilter::Completed => "No completed todos yet.",
+        };
+
+        let empty_todos_list_text = text(empty_text)
+            .size(15.0 * self.window_ratio)
+            .color(Color::from_rgb8(148, 163, 184));
+
+        let what_to_display = if todos_liste_len != 0 {
+            container(todos_scrollable)
+        } else {
+            container(empty_todos_list_text)
+        };
+
+        let main_content = container(
+            column![
+                text("My Tasks")
+                    .size(28.0 * self.window_ratio)
+                    .color(Color::from_rgb8(30, 41, 59)),
+                input_bar,
+                what_to_display
+            ]
+            .width(Length::Fill)
+            .align_x(iced::alignment::Horizontal::Center)
+            .spacing(18.0 * self.window_ratio),
         )
-        .width(400.0 * self.window_ratio)
+        .width(560.0 * self.window_ratio)
         .height(400.0 * self.window_ratio);
 
-        container(todos_card)
+        let main_content_wrapper = container(main_content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill);
+
+        let sidebar = sidebar(self.window_ratio, self.todo_filter);
+
+        let layout = row![sidebar, main_content_wrapper]
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        container(layout)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
             .style(|_| iced::widget::container::Style {

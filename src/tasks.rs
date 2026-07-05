@@ -7,7 +7,7 @@ pub struct TodoItem {
     pub title_state: TodoTitleState,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TodoFilter {
     #[default]
     All,
