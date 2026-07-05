@@ -13,19 +13,30 @@ pub fn sidebar<'a>(
     todos_count: Vec<usize>,
 ) -> Element<'a, AppMessage> {
     let filter_buttons: Vec<_> = TodoFilter::iter()
-        .zip(todos_count)
+        .zip(&todos_count)
         .map(move |(filter, count)| {
             sidebar_filter_button(
                 filter.to_string(),
                 filter,
-                count,
+                *count,
                 current_filter,
                 window_ratio,
             )
         })
         .collect();
 
-    let content = Column::new()
+    let clear_button = button(container(text("Clear completed")).center(Length::Fill))
+        .on_press(AppMessage::ClearCompletedTodos)
+        .width(Length::Fill)
+        .height(36.0 * window_ratio)
+        .padding(0)
+        .style(move |theme, status| clear_button_style(theme, status, window_ratio));
+
+    let settings_button = button(text("Settings"))
+        .on_press(AppMessage::SettingsPressed)
+        .style(move |_, _| settings_button_style(window_ratio));
+
+    let mut content = Column::new()
         .push(
             text("Iced Tasks")
                 .size(22.0 * window_ratio)
@@ -33,12 +44,14 @@ pub fn sidebar<'a>(
         )
         .push(Space::new().height(24.0 * window_ratio))
         .extend(filter_buttons)
-        .push(Space::new().height(Length::Fill))
-        .push(
-            button(text("Settings"))
-                .on_press(AppMessage::SettingsPressed)
-                .style(move |_, _| settings_button_style(window_ratio)),
-        )
+        .push(Space::new().height(Length::Fill));
+
+    if todos_count[2] > 0 {
+        content = content.push(clear_button);
+    }
+
+    content = content
+        .push(settings_button)
         .spacing(8.0 * window_ratio)
         .padding([24.0 * window_ratio, 16.0 * window_ratio]);
 
@@ -80,6 +93,32 @@ fn sidebar_filter_button<'a>(
         .style(move |_, status| button_style(filter, current_filter, status, window_ratio))
         .on_press(AppMessage::TodoFilterChanged(filter))
         .into()
+}
+
+#[inline]
+fn clear_button_style(
+    theme: &iced::Theme,
+    status: Status,
+    window_ratio: f32,
+) -> iced::widget::button::Style {
+    let bg = Color::from_rgb8(254, 226, 226);
+    let hover = Color::from_rgb8(254, 202, 202);
+    let text = Color::from_rgb8(185, 28, 28);
+
+    Style {
+        background: Some(if status == iced::widget::button::Status::Hovered {
+            hover.into()
+        } else {
+            bg.into()
+        }),
+        text_color: text,
+        border: Border {
+            radius: Radius::new(8.0 * window_ratio),
+            color: Color::from_rgb8(254, 226, 226),
+            ..Default::default()
+        },
+        ..Default::default()
+    }
 }
 
 #[inline]

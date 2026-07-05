@@ -48,7 +48,8 @@ pub enum AppMessage {
     EditTodo(usize),
     CancelEditTodo(usize),
 
-    DeleteTodo(usize), // index
+    DeleteTodo(usize),
+    ClearCompletedTodos,
     TodoFilterChanged(TodoFilter),
 
     SettingsPressed,
@@ -158,7 +159,10 @@ impl App {
 
                 Task::none()
             }
-
+            ClearCompletedTodos => {
+                self.todos.retain(|todo| todo.status == TodoStatus::Active);
+                Task::none()
+            }
             TodoFilterChanged(filter) => {
                 self.todo_filter = filter;
                 Task::none()
