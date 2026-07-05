@@ -6,12 +6,10 @@ use iced::window::{self, Id, maximize, *};
 use iced::{Border, Color, Length, Shadow, Theme, theme};
 use iced::{Element, Subscription, Task, Vector};
 use strum::IntoEnumIterator;
-use tracing_subscriber::filter;
 
-use crate::app::AppMessage::AddTodo;
+use crate::app::AppMessage::AppStart;
 use crate::tasks::TodoTitleState::{Editing, Viewing};
 use crate::tasks::{TodoStatus, TodoTitleState};
-use crate::widgets::filter_bar::filter_bar;
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
@@ -21,10 +19,7 @@ use super::tasks::TodoFilter;
 use super::tasks::TodoItem;
 
 pub struct App {
-    // view: View,
-
-    // Main Window properties
-    main_window_id: Option<Id>,
+    // Window properties
     window_ratio: f32,
     window_size: Vector,
 
@@ -42,7 +37,6 @@ pub struct App {
 pub enum AppMessage {
     // Start the app and open the main window
     AppStart(Id),
-    WindowClosed(Id),
     WindowResized(Vector),
 
     AddTodo,
@@ -60,32 +54,26 @@ pub enum AppMessage {
     SettingsPressed,
 }
 
-#[derive(Debug)]
-pub enum View {}
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            window_ratio: 1.0,
+            window_size: Vector::new(800.0, 600.0),
+            todos: storage::load_todos(),
+            todo_input_buffer: String::new(),
+            todo_filter: TodoFilter::All,
+            todo_edit_buffer: String::new(),
+            old_todo_title: String::new(),
+        }
+    }
+}
 
 impl App {
-    pub fn new() -> (Self, Task<AppMessage>) {
-        let (id, open) = window::open(window::Settings::default());
-        let max = maximize(id, true);
-
-        (
-            Self {
-                // view: View {},
-                main_window_id: Some(id),
-                window_ratio: 1.0,
-                window_size: Vector::new(800.0, 600.0),
-                todos: storage::load_todos(),
-                todo_input_buffer: String::new(),
-                todo_filter: TodoFilter::All,
-                todo_edit_buffer: String::new(),
-                old_todo_title: String::new(),
-            },
-            // Use batch to run both tasks
-            Task::batch([open.map(AppMessage::AppStart), max]),
-        )
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub fn title(&self, _window: iced::window::Id) -> String {
+    pub fn title(&self) -> String {
         "Iced Tasks".into()
     }
 
@@ -93,8 +81,10 @@ impl App {
         use AppMessage::*;
 
         match msg {
-            AppStart(id) => {
-                println!("Main window opened with ID: {id}");
+            AppStart(id) => iced::window::maximize(id, true),
+            WindowResized(size) => {
+                self.window_ratio = size.x / size.y;
+                self.window_size = size;
                 Task::none()
             }
             AddTodo => {
@@ -168,21 +158,7 @@ impl App {
 
                 Task::none()
             }
-            WindowClosed(id) => {
-                // If the main window is closed, exit the application
-                if self.main_window_id != Some(id) {
-                    println!("Window closed with ID: {id}");
-                    return close(id);
-                }
 
-                println!("Main window closed with ID: {id}, exiting application");
-                iced::exit()
-            }
-            WindowResized(size) => {
-                self.window_ratio = size.x / size.y;
-                self.window_size = size;
-                Task::none()
-            }
             TodoFilterChanged(filter) => {
                 self.todo_filter = filter;
                 Task::none()
@@ -192,15 +168,15 @@ impl App {
     }
 
     fn subscription(&self) -> Subscription<AppMessage> {
-        let close_subscription = iced::window::close_events().map(AppMessage::WindowClosed);
+        let window_open = iced::window::open_events().map(AppStart);
 
-        let window_resize_subscription =
+        let window_resize =
             iced::window::resize_events().map(|(_, size)| AppMessage::WindowResized(size.into()));
 
-        Subscription::batch([close_subscription, window_resize_subscription])
+        Subscription::batch([window_open, window_resize])
     }
 
-    fn view(&self, _window_id: iced::window::Id) -> Element<'_, AppMessage> {
+    fn view(&self) -> Element<'_, AppMessage> {
         let todos_count: Vec<usize> = TodoFilter::iter()
             .map(|filter| {
                 self.todos
@@ -286,9 +262,9 @@ impl App {
     }
 
     pub fn run() -> iced::Result {
-        iced::daemon(Self::new, Self::update, Self::view)
-            .title(Self::title)
+        iced::application(Self::new, Self::update, Self::view)
             .subscription(Self::subscription)
+            .title(Self::title)
             .antialiasing(true)
             .run()
     }
