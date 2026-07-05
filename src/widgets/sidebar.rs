@@ -1,32 +1,46 @@
 use iced::border::Radius;
 use iced::widget::button::{Status, Style};
-use iced::widget::{Space, button, column, container, row, space, text};
+use iced::widget::{Column, Space, button, column, container, row, space, text};
 use iced::{Border, Color, Element, Length, Theme};
+use strum::IntoEnumIterator;
 
 use crate::app::AppMessage;
 use crate::tasks::{TodoFilter, TodoItem, TodoStatus, TodoTitleState};
 
-pub fn sidebar<'a>(window_ratio: f32, current_filter: TodoFilter) -> Element<'a, AppMessage> {
-    let content = column![
-        text("Iced Tasks")
-            .size(22.0 * window_ratio)
-            .color(Color::from_rgb8(30, 41, 59)),
-        Space::new().height(24.0 * window_ratio),
-        sidebar_filter_button("All", TodoFilter::All, current_filter, window_ratio),
-        sidebar_filter_button("Active", TodoFilter::Active, current_filter, window_ratio),
-        sidebar_filter_button(
-            "Completed",
-            TodoFilter::Completed,
-            current_filter,
-            window_ratio
-        ),
-        Space::new().height(Length::Fill),
-        button(text("Settings"))
-            .on_press(AppMessage::SettingsPressed)
-            .style(move |_, _| { settings_button_style(window_ratio) }),
-    ]
-    .spacing(8.0 * window_ratio)
-    .padding([24.0 * window_ratio, 16.0 * window_ratio]);
+pub fn sidebar<'a>(
+    window_ratio: f32,
+    current_filter: TodoFilter,
+    todos_count: Vec<usize>,
+) -> Element<'a, AppMessage> {
+    let filter_buttons: Vec<_> = TodoFilter::iter()
+        .zip(todos_count)
+        .map(move |(filter, count)| {
+            sidebar_filter_button(
+                filter.to_string(),
+                filter,
+                count,
+                current_filter,
+                window_ratio,
+            )
+        })
+        .collect();
+
+    let content = Column::new()
+        .push(
+            text("Iced Tasks")
+                .size(22.0 * window_ratio)
+                .color(Color::from_rgb8(30, 41, 59)),
+        )
+        .push(Space::new().height(24.0 * window_ratio))
+        .extend(filter_buttons)
+        .push(Space::new().height(Length::Fill))
+        .push(
+            button(text("Settings"))
+                .on_press(AppMessage::SettingsPressed)
+                .style(move |_, _| settings_button_style(window_ratio)),
+        )
+        .spacing(8.0 * window_ratio)
+        .padding([24.0 * window_ratio, 16.0 * window_ratio]);
 
     container(content)
         .width(Length::Fixed(230.0 * window_ratio))
@@ -45,12 +59,19 @@ pub fn sidebar<'a>(window_ratio: f32, current_filter: TodoFilter) -> Element<'a,
 
 #[inline]
 fn sidebar_filter_button<'a>(
-    button_text: &'a str,
+    button_text: String,
     filter: TodoFilter,
+    count: usize,
     current_filter: TodoFilter,
     window_ratio: f32,
 ) -> Element<'a, AppMessage> {
-    let button_text = container(text(button_text)).center(Length::Fill);
+    let button_text = container(row![
+        text(button_text),
+        Space::new().width(Length::Fill),
+        text(count)
+    ])
+    .padding([6.0 * window_ratio, 6.0 * window_ratio])
+    .center(Length::Fill);
 
     button(button_text)
         .width(Length::Fill)

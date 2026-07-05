@@ -2,42 +2,25 @@ use iced::border::Radius;
 use iced::widget::button::{Status, Style};
 use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Theme};
+use strum::IntoEnumIterator;
 
 use crate::app::AppMessage;
 use crate::tasks::{TodoFilter, TodoItem, TodoStatus};
 
 pub fn filter_bar<'a>(
     window_ratio: f32,
-    current_filter: &'a TodoFilter,
+    current_filter: TodoFilter,
 ) -> iced::Element<'a, AppMessage> {
-    let filter_row = row![
-        button(text("All"))
-            .on_press(AppMessage::TodoFilterChanged(TodoFilter::All))
-            .style(move |_, status| button_style(
-                TodoFilter::All,
-                current_filter,
-                status,
-                window_ratio
-            )),
-        button(text("Active"))
-            .on_press(AppMessage::TodoFilterChanged(TodoFilter::Active))
-            .style(move |_, status| button_style(
-                TodoFilter::Active,
-                current_filter,
-                status,
-                window_ratio
-            )),
-        button(text("Completed"))
-            .on_press(AppMessage::TodoFilterChanged(TodoFilter::Completed))
-            .style(move |_, status| button_style(
-                TodoFilter::Completed,
-                current_filter,
-                status,
-                window_ratio
-            )),
-    ]
-    .spacing(5.0 * window_ratio)
-    .height(Length::Fixed(30.0 * window_ratio));
+    let filter_buttons = TodoFilter::iter().map(move |filter| {
+        button(text(filter.to_string()))
+            .on_press(AppMessage::TodoFilterChanged(filter))
+            .style(move |_, status| button_style(filter, current_filter, status, window_ratio))
+            .into()
+    });
+
+    let filter_row = row(filter_buttons)
+        .spacing(5.0 * window_ratio)
+        .height(Length::Fixed(30.0 * window_ratio));
 
     container(filter_row)
         .width(Length::Fill)
@@ -48,7 +31,7 @@ pub fn filter_bar<'a>(
 #[inline]
 fn button_style(
     button_filter: TodoFilter,
-    current_filter: &TodoFilter,
+    current_filter: TodoFilter,
     status: Status,
     window_ratio: f32,
 ) -> Style {
@@ -66,19 +49,19 @@ fn button_style(
     let inactive_bg_hover = Color::from_rgb8(241, 245, 249);
     let inactive_border_hover = Color::from_rgb8(203, 213, 225);
 
-    let bg = if button_filter == *current_filter {
+    let bg = if button_filter == current_filter {
         selected_bg
     } else {
         inactive_bg
     };
 
-    let border_color = if button_filter == *current_filter {
+    let border_color = if button_filter == current_filter {
         selected_border
     } else {
         inactive_border
     };
 
-    let text = if button_filter == *current_filter {
+    let text = if button_filter == current_filter {
         selected_text
     } else {
         inactive_text

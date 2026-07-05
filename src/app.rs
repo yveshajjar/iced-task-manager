@@ -5,6 +5,7 @@ use iced::widget::{button, column, container, row, space, text};
 use iced::window::{self, Id, maximize, *};
 use iced::{Border, Color, Length, Shadow, Theme, theme};
 use iced::{Element, Subscription, Task, Vector};
+use strum::IntoEnumIterator;
 use tracing_subscriber::filter;
 
 use crate::app::AppMessage::AddTodo;
@@ -200,21 +201,26 @@ impl App {
     }
 
     fn view(&self, _window_id: iced::window::Id) -> Element<'_, AppMessage> {
-        use View::*;
+        let todos_count: Vec<usize> = TodoFilter::iter()
+            .map(|filter| {
+                self.todos
+                    .iter()
+                    .filter(|todo| filter.matches(&todo.status))
+                    .count()
+            })
+            .collect();
 
         let todos_list: Vec<_> = self
             .todos
             .iter()
             .enumerate()
-            .filter(|(_, todo)| match self.todo_filter {
-                TodoFilter::All => true,
-                TodoFilter::Active => todo.status == TodoStatus::Active,
-                TodoFilter::Completed => todo.status == TodoStatus::Completed,
-            })
+            .filter(|(_, todo)| self.todo_filter.matches(&todo.status))
             .map(|(index, todo)| todo_card(todo, index, self.window_ratio, &self.todo_edit_buffer))
             .collect();
 
-        let todos_liste_len = todos_list.len();
+        let sidebar = sidebar(self.window_ratio, self.todo_filter, todos_count);
+
+        let has_todos = !todos_list.is_empty();
 
         let todos_column = column(todos_list)
             .spacing(2.0 * self.window_ratio)
@@ -226,8 +232,6 @@ impl App {
             .height(Length::Fixed(460.0 * self.window_ratio))
             .style(scrollable_style);
 
-        let filter_bar = filter_bar(self.window_ratio, &self.todo_filter);
-
         let input_bar = input_bar(&self.todo_input_buffer, self.window_ratio);
 
         let empty_text = match self.todo_filter {
@@ -236,38 +240,36 @@ impl App {
             TodoFilter::Completed => "No completed todos yet.",
         };
 
-        let empty_todos_list_text = text(empty_text)
+        let empty_state_text = text(empty_text)
             .size(15.0 * self.window_ratio)
             .color(Color::from_rgb8(148, 163, 184));
 
-        let what_to_display = if todos_liste_len != 0 {
+        let todos_content = if has_todos {
             container(todos_scrollable)
         } else {
-            container(empty_todos_list_text)
+            container(empty_state_text)
         };
 
-        let main_content = container(
-            column![
-                text("My Tasks")
-                    .size(28.0 * self.window_ratio)
-                    .color(Color::from_rgb8(30, 41, 59)),
-                input_bar,
-                what_to_display
-            ]
-            .width(Length::Fill)
-            .align_x(iced::alignment::Horizontal::Center)
-            .spacing(18.0 * self.window_ratio),
-        )
-        .width(560.0 * self.window_ratio)
-        .height(400.0 * self.window_ratio);
+        let main_content_elements = column![
+            text("My Tasks")
+                .size(28.0 * self.window_ratio)
+                .color(Color::from_rgb8(30, 41, 59)),
+            input_bar,
+            todos_content,
+        ]
+        .width(Length::Fill)
+        .align_x(iced::alignment::Horizontal::Center)
+        .spacing(18.0 * self.window_ratio);
+
+        let main_content = container(main_content_elements)
+            .width(560.0 * self.window_ratio)
+            .height(400.0 * self.window_ratio);
 
         let main_content_wrapper = container(main_content)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill);
-
-        let sidebar = sidebar(self.window_ratio, self.todo_filter);
 
         let layout = row![sidebar, main_content_wrapper]
             .width(Length::Fill)
