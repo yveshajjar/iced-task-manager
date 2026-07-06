@@ -1,14 +1,15 @@
 use iced::border::Radius;
 use iced::widget::button::{Status, Style};
 use iced::widget::{Column, Space, button, column, container, row, space, text};
-use iced::{Border, Color, Element, Length, Theme};
+use iced::{Border, Color, Element, Length};
 use strum::IntoEnumIterator;
 
-use crate::app::AppMessage;
+use crate::app::{AppMessage, AppPage};
 use crate::tasks::{TodoFilter, TodoItem, TodoStatus, TodoTitleState};
 
 pub fn sidebar<'a>(
     window_ratio: f32,
+    current_page: &'a AppPage,
     current_filter: TodoFilter,
     todos_count: Vec<usize>,
 ) -> Element<'a, AppMessage> {
@@ -17,6 +18,7 @@ pub fn sidebar<'a>(
         .map(move |(filter, count)| {
             sidebar_filter_button(
                 filter.to_string(),
+                current_page,
                 filter,
                 *count,
                 current_filter,
@@ -33,8 +35,8 @@ pub fn sidebar<'a>(
         .style(move |theme, status| clear_button_style(theme, status, window_ratio));
 
     let settings_button = button(text("Settings"))
-        .on_press(AppMessage::SettingsPressed)
-        .style(move |_, _| settings_button_style(window_ratio));
+        .on_press(AppMessage::PageChanged(AppPage::Settings))
+        .style(move |_, _| settings_button_style(current_page, window_ratio));
 
     let mut content = Column::new()
         .push(
@@ -73,6 +75,7 @@ pub fn sidebar<'a>(
 #[inline]
 fn sidebar_filter_button<'a>(
     button_text: String,
+    current_page: &'a AppPage,
     filter: TodoFilter,
     count: usize,
     current_filter: TodoFilter,
@@ -90,7 +93,7 @@ fn sidebar_filter_button<'a>(
         .width(Length::Fill)
         .height(36.0 * window_ratio)
         .padding(0)
-        .style(move |_, status| button_style(filter, current_filter, status, window_ratio))
+        .style(move |_, status| button_style(filter, current_page, status, window_ratio))
         .on_press(AppMessage::TodoFilterChanged(filter))
         .into()
 }
@@ -124,7 +127,7 @@ fn clear_button_style(
 #[inline]
 fn button_style(
     button_filter: TodoFilter,
-    current_filter: TodoFilter,
+    current_page: &AppPage,
     status: Status,
     window_ratio: f32,
 ) -> Style {
@@ -142,22 +145,37 @@ fn button_style(
     let inactive_bg_hover = Color::from_rgb8(241, 245, 249);
     let inactive_border_hover = Color::from_rgb8(203, 213, 225);
 
-    let bg = if button_filter == current_filter {
-        selected_bg
-    } else {
-        inactive_bg
+    let bg = match current_page {
+        AppPage::Tasks(filter) => {
+            if *filter == button_filter {
+                selected_bg
+            } else {
+                inactive_bg
+            }
+        }
+        AppPage::Settings => inactive_bg,
     };
 
-    let border_color = if button_filter == current_filter {
-        selected_border
-    } else {
-        inactive_border
+    let border_color = match current_page {
+        AppPage::Tasks(filter) => {
+            if *filter == button_filter {
+                selected_border
+            } else {
+                inactive_border
+            }
+        }
+        AppPage::Settings => inactive_border,
     };
 
-    let text = if button_filter == current_filter {
-        selected_text
-    } else {
-        inactive_text
+    let text = match current_page {
+        AppPage::Tasks(filter) => {
+            if *filter == button_filter {
+                selected_text
+            } else {
+                inactive_text
+            }
+        }
+        AppPage::Settings => inactive_text,
     };
 
     Style {
@@ -181,10 +199,37 @@ fn button_style(
 }
 
 #[inline]
-fn settings_button_style(window_ratio: f32) -> Style {
-    let bg = Color::from_rgb8(255, 255, 255);
-    let border_color = Color::from_rgb8(226, 232, 240);
-    let text_color = Color::from_rgb8(100, 116, 139);
+fn settings_button_style(current_page: &AppPage, window_ratio: f32) -> Style {
+    let selected_bg = Color::from_rgb8(239, 246, 255);
+    let selected_border = Color::from_rgb8(147, 197, 253);
+    let selected_text = Color::from_rgb8(37, 99, 235);
+
+    // Inactive filter
+    let inactive_bg = Color::from_rgb8(255, 255, 255);
+    let inactive_border = Color::from_rgb8(226, 232, 240);
+    let inactive_text = Color::from_rgb8(100, 116, 139);
+
+    // Hover inactive
+    let inactive_bg_hover = Color::from_rgb8(241, 245, 249);
+    let inactive_border_hover = Color::from_rgb8(203, 213, 225);
+
+    let bg = if *current_page == AppPage::Settings {
+        selected_bg
+    } else {
+        inactive_bg
+    };
+
+    let border_color = if *current_page == AppPage::Settings {
+        selected_border
+    } else {
+        inactive_border
+    };
+
+    let text_color = if *current_page == AppPage::Settings {
+        selected_text
+    } else {
+        inactive_text
+    };
 
     Style {
         background: Some(bg.into()),

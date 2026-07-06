@@ -1,6 +1,7 @@
 pub mod app;
 pub mod tasks;
 pub mod storage;
+pub mod pages;
 
 pub mod widgets; 
 

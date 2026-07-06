@@ -8,6 +8,8 @@ use iced::{Element, Subscription, Task, Vector};
 use strum::IntoEnumIterator;
 
 use crate::app::AppMessage::AppStart;
+use crate::pages::settings::settings_page;
+use crate::pages::tasks::tasks_page;
 use crate::tasks::TodoTitleState::{Editing, Viewing};
 use crate::tasks::{TodoStatus, TodoTitleState};
 use crate::widgets::input_bar::input_bar;
@@ -19,18 +21,24 @@ use super::tasks::TodoFilter;
 use super::tasks::TodoItem;
 
 pub struct App {
+    // App pages
+    current_page: AppPage,
+
     // Window properties
-    window_ratio: f32,
-    window_size: Vector,
+    pub window_ratio: f32,
+    pub window_size: Vector,
 
     // Task properties
-    todos: Vec<TodoItem>,
-    todo_input_buffer: String,
-    todo_edit_buffer: String,
-    old_todo_title: String,
+    pub todos: Vec<TodoItem>,
+    pub todo_input_buffer: String,
+    pub todo_edit_buffer: String,
+    pub old_todo_title: String,
+}
 
-    // Filter properties
-    todo_filter: TodoFilter,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AppPage {
+    Tasks(TodoFilter),
+    Settings,
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +46,7 @@ pub enum AppMessage {
     // Start the app and open the main window
     AppStart(Id),
     WindowResized(Vector),
+    PageChanged(AppPage),
 
     AddTodo,
     TodoInputChanged(String),
@@ -58,11 +67,11 @@ pub enum AppMessage {
 impl Default for App {
     fn default() -> Self {
         Self {
+            current_page: AppPage::Tasks(TodoFilter::All),
             window_ratio: 1.0,
             window_size: Vector::new(800.0, 600.0),
             todos: storage::load_todos(),
             todo_input_buffer: String::new(),
-            todo_filter: TodoFilter::All,
             todo_edit_buffer: String::new(),
             old_todo_title: String::new(),
         }
@@ -86,6 +95,10 @@ impl App {
             WindowResized(size) => {
                 self.window_ratio = size.x / size.y;
                 self.window_size = size;
+                Task::none()
+            }
+            PageChanged(page) => {
+                self.current_page = page;
                 Task::none()
             }
             AddTodo => {
@@ -164,7 +177,8 @@ impl App {
                 Task::none()
             }
             TodoFilterChanged(filter) => {
-                self.todo_filter = filter;
+                self.current_page = AppPage::Tasks(filter);
+
                 Task::none()
             }
             SettingsPressed => Task::none(),
@@ -190,72 +204,38 @@ impl App {
             })
             .collect();
 
-        let todos_list: Vec<_> = self
-            .todos
-            .iter()
-            .enumerate()
-            .filter(|(_, todo)| self.todo_filter.matches(&todo.status))
-            .map(|(index, todo)| todo_card(todo, index, self.window_ratio, &self.todo_edit_buffer))
-            .collect();
-
-        let sidebar = sidebar(self.window_ratio, self.todo_filter, todos_count);
-
-        let has_todos = !todos_list.is_empty();
-
-        let todos_column = column(todos_list)
-            .spacing(2.0 * self.window_ratio)
-            .width(Length::Fixed(320.0 * self.window_ratio))
-            .height(Length::Fill);
-
-        let todos_scrollable = iced::widget::scrollable(todos_column)
-            .width(Length::Fixed(370.0 * self.window_ratio))
-            .height(Length::Fixed(460.0 * self.window_ratio))
-            .style(scrollable_style);
-
-        let input_bar = input_bar(&self.todo_input_buffer, self.window_ratio);
-
-        let empty_text = match self.todo_filter {
-            TodoFilter::All => "No todos yet. Add your first task above.",
-            TodoFilter::Active => "No active todos.",
-            TodoFilter::Completed => "No completed todos yet.",
+        let current_filter = match self.current_page {
+            AppPage::Settings => TodoFilter::All,
+            AppPage::Tasks(filter) => filter,
         };
 
-        let empty_state_text = text(empty_text)
-            .size(15.0 * self.window_ratio)
-            .color(Color::from_rgb8(148, 163, 184));
+        let sidebar = sidebar(
+            self.window_ratio,
+            &self.current_page,
+            current_filter,
+            todos_count,
+        );
 
-        let todos_content = if has_todos {
-            container(todos_scrollable)
-        } else {
-            container(empty_state_text)
+        let current_page = match self.current_page {
+            AppPage::Tasks(filter) => tasks_page(self, filter),
+            AppPage::Settings => settings_page(self),
         };
 
-        let main_content_elements = column![
-            text("My Tasks")
-                .size(28.0 * self.window_ratio)
-                .color(Color::from_rgb8(30, 41, 59)),
-            input_bar,
-            todos_content,
-        ]
-        .width(Length::Fill)
-        .align_x(iced::alignment::Horizontal::Center)
-        .spacing(18.0 * self.window_ratio);
-
-        let main_content = container(main_content_elements)
+        let current_page = container(current_page)
             .width(560.0 * self.window_ratio)
             .height(400.0 * self.window_ratio);
 
-        let main_content_wrapper = container(main_content)
+        let current_page_wrapper = container(current_page)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill);
 
-        let layout = row![sidebar, main_content_wrapper]
+        let main_layout = row![sidebar, current_page_wrapper]
             .width(Length::Fill)
             .height(Length::Fill);
 
-        container(layout)
+        container(main_layout)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
             .style(|_| iced::widget::container::Style {
@@ -271,68 +251,5 @@ impl App {
             .title(Self::title)
             .antialiasing(true)
             .run()
-    }
-}
-
-#[inline]
-fn scrollable_style(
-    theme: &Theme,
-    status: iced::widget::scrollable::Status,
-) -> iced::widget::scrollable::Style {
-    iced::widget::scrollable::Style {
-        auto_scroll: AutoScroll {
-            background: Color::from_rgb8(226, 232, 240).into(),
-            border: Border {
-                radius: Radius::from(5.0),
-                color: Color::from_rgb8(226, 232, 240),
-                ..Default::default()
-            },
-            icon: Color::from_rgb8(148, 163, 184),
-            shadow: Shadow {
-                ..Default::default()
-            },
-        },
-        container: iced::widget::container::Style {
-            background: Some(Color::TRANSPARENT.into()),
-            border: Border {
-                radius: Radius::from(5.0),
-                color: Color::from_rgb8(226, 232, 240),
-                ..Default::default()
-            },
-            ..Default::default()
-        },
-        gap: None,
-        horizontal_rail: Rail {
-            background: Some(Color::from_rgb8(226, 232, 240).into()),
-            border: Border {
-                radius: Radius::from(5.0),
-                color: Color::from_rgb8(226, 232, 240),
-                ..Default::default()
-            },
-            scroller: Scroller {
-                background: Color::from_rgb8(148, 163, 184).into(),
-                border: Border {
-                    radius: Radius::from(5.0),
-                    color: Color::from_rgb8(148, 163, 184),
-                    ..Default::default()
-                },
-            },
-        },
-        vertical_rail: Rail {
-            background: Some(Color::from_rgb8(226, 232, 240).into()),
-            border: Border {
-                radius: Radius::from(5.0),
-                color: Color::from_rgb8(226, 232, 240),
-                ..Default::default()
-            },
-            scroller: Scroller {
-                background: Color::from_rgb8(148, 163, 184).into(),
-                border: Border {
-                    radius: Radius::from(5.0),
-                    color: Color::from_rgb8(148, 163, 184),
-                    ..Default::default()
-                },
-            },
-        },
     }
 }
