@@ -35,26 +35,29 @@ pub fn settings_page<'a>(app: &'a App) -> iced::Element<'a, AppMessage> {
         text("More options coming soon.")
             .size(15.0 * app.window_ratio)
             .color(theme_colors.text_main),
-        button(text("Light"))
-            .on_press(AppMessage::ThemeChanged(AppTheme::Light))
-            .style(move |_, status| button_style(
-                app.theme,
-                AppTheme::Light,
-                theme_colors,
-                status,
-                current_page,
-                window_ratio
-            )),
-        button(text("Dark"))
-            .on_press(AppMessage::ThemeChanged(AppTheme::Dark))
-            .style(move |_, status| button_style(
-                app.theme,
-                AppTheme::Dark,
-                theme_colors,
-                status,
-                current_page,
-                window_ratio
-            )),
+        row![
+            button(text("Light"))
+                .on_press(AppMessage::ThemeChanged(AppTheme::Light))
+                .style(move |_, status| button_style(
+                    app.theme,
+                    AppTheme::Light,
+                    theme_colors,
+                    status,
+                    current_page,
+                    window_ratio
+                )),
+            button(text("Dark"))
+                .on_press(AppMessage::ThemeChanged(AppTheme::Dark))
+                .style(move |_, status| button_style(
+                    app.theme,
+                    AppTheme::Dark,
+                    theme_colors,
+                    status,
+                    current_page,
+                    window_ratio
+                ))
+        ]
+        .spacing(8.0 * window_ratio),
     ]
     .spacing(18.0 * app.window_ratio)
     .align_x(iced::alignment::Horizontal::Center);

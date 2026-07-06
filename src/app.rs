@@ -10,6 +10,7 @@ use strum::IntoEnumIterator;
 use crate::app::AppMessage::AppStart;
 use crate::pages::settings::settings_page;
 use crate::pages::tasks::tasks_page;
+use crate::storage::{load_theme, save_theme};
 use crate::tasks::TodoTitleState::{Editing, Viewing};
 use crate::tasks::{TodoStatus, TodoTitleState};
 use crate::theme::{AppTheme, ThemeColors};
@@ -70,7 +71,7 @@ impl Default for App {
     fn default() -> Self {
         Self {
             current_page: AppPage::Tasks(TodoFilter::All),
-            theme: AppTheme::Light,
+            theme: load_theme(),
             window_ratio: 1.0,
             window_size: Vector::new(800.0, 600.0),
             todos: storage::load_todos(),
@@ -106,6 +107,8 @@ impl App {
             }
             ThemeChanged(theme) => {
                 self.theme = theme;
+
+                save_theme(theme);
 
                 Task::none()
             }

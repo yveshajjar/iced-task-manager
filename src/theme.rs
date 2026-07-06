@@ -1,6 +1,7 @@
 use iced::Color;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum AppTheme {
     Light,
     Dark,
