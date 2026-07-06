@@ -12,6 +12,7 @@ use crate::app::AppMessage::AppStart;
 use crate::app::{App, AppMessage};
 use crate::tasks::TodoTitleState::{Editing, Viewing};
 use crate::tasks::{TodoStatus, TodoTitleState};
+use crate::theme::AppTheme;
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
@@ -21,12 +22,22 @@ use crate::tasks::TodoFilter;
 use crate::tasks::TodoItem;
 
 pub fn tasks_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element<'a, AppMessage> {
+    let theme_colors = app.theme.colors();
+
     let todos_list: Vec<_> = app
         .todos
         .iter()
         .enumerate()
         .filter(|(_, todo)| current_filter.matches(&todo.status))
-        .map(|(index, todo)| todo_card(todo, index, app.window_ratio, &app.todo_edit_buffer))
+        .map(|(index, todo)| {
+            todo_card(
+                todo,
+                theme_colors,
+                index,
+                app.window_ratio,
+                &app.todo_edit_buffer,
+            )
+        })
         .collect();
 
     let has_todos = !todos_list.is_empty();
@@ -41,7 +52,7 @@ pub fn tasks_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         .height(Length::Fixed(460.0 * app.window_ratio))
         .style(scrollable_style);
 
-    let input_bar = input_bar(&app.todo_input_buffer, app.window_ratio);
+    let input_bar = input_bar(app, &app.todo_input_buffer);
 
     let empty_text = match current_filter {
         TodoFilter::All => "No todos yet. Add your first task above.",
@@ -51,7 +62,7 @@ pub fn tasks_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
 
     let empty_state_text = text(empty_text)
         .size(15.0 * app.window_ratio)
-        .color(Color::from_rgb8(148, 163, 184));
+        .color(theme_colors.text_main);
 
     let todos_content = if has_todos {
         container(todos_scrollable)
@@ -62,7 +73,7 @@ pub fn tasks_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
     column![
         text("My Tasks")
             .size(28.0 * app.window_ratio)
-            .color(Color::from_rgb8(30, 41, 59)),
+            .color(theme_colors.text_main),
         input_bar,
         todos_content,
     ]

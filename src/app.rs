@@ -12,6 +12,7 @@ use crate::pages::settings::settings_page;
 use crate::pages::tasks::tasks_page;
 use crate::tasks::TodoTitleState::{Editing, Viewing};
 use crate::tasks::{TodoStatus, TodoTitleState};
+use crate::theme::{AppTheme, ThemeColors};
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
@@ -22,7 +23,10 @@ use super::tasks::TodoItem;
 
 pub struct App {
     // App pages
-    current_page: AppPage,
+    pub current_page: AppPage,
+
+    // App theme
+    pub theme: AppTheme,
 
     // Window properties
     pub window_ratio: f32,
@@ -43,31 +47,30 @@ pub enum AppPage {
 
 #[derive(Debug, Clone)]
 pub enum AppMessage {
-    // Start the app and open the main window
+    // App related messages
     AppStart(Id),
     WindowResized(Vector),
     PageChanged(AppPage),
+    ThemeChanged(AppTheme),
 
+    // Todo related messages
     AddTodo,
     TodoInputChanged(String),
     TodoToggled(usize, TodoStatus),
-
     ShowTodoEdit(usize),
     TodoEditChanged(String),
     EditTodo(usize),
     CancelEditTodo(usize),
-
     DeleteTodo(usize),
     ClearCompletedTodos,
     TodoFilterChanged(TodoFilter),
-
-    SettingsPressed,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             current_page: AppPage::Tasks(TodoFilter::All),
+            theme: AppTheme::Light,
             window_ratio: 1.0,
             window_size: Vector::new(800.0, 600.0),
             todos: storage::load_todos(),
@@ -99,6 +102,11 @@ impl App {
             }
             PageChanged(page) => {
                 self.current_page = page;
+                Task::none()
+            }
+            ThemeChanged(theme) => {
+                self.theme = theme;
+
                 Task::none()
             }
             AddTodo => {
@@ -181,7 +189,6 @@ impl App {
 
                 Task::none()
             }
-            SettingsPressed => Task::none(),
         }
     }
 
@@ -204,17 +211,9 @@ impl App {
             })
             .collect();
 
-        let current_filter = match self.current_page {
-            AppPage::Settings => TodoFilter::All,
-            AppPage::Tasks(filter) => filter,
-        };
+        let theme_colors = self.theme.colors();
 
-        let sidebar = sidebar(
-            self.window_ratio,
-            &self.current_page,
-            current_filter,
-            todos_count,
-        );
+        let sidebar = sidebar(self, todos_count);
 
         let current_page = match self.current_page {
             AppPage::Tasks(filter) => tasks_page(self, filter),
@@ -238,8 +237,8 @@ impl App {
         container(main_layout)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
-            .style(|_| iced::widget::container::Style {
-                background: Some(iced::Color::WHITE.into()),
+            .style(move |_| iced::widget::container::Style {
+                background: Some(theme_colors.app_bg.into()),
                 ..Default::default()
             })
             .into()

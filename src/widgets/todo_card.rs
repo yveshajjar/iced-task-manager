@@ -5,6 +5,7 @@ use iced::{Border, Color, Length, Theme};
 
 use crate::app::AppMessage;
 use crate::tasks::{TodoItem, TodoStatus, TodoTitleState};
+use crate::theme::ThemeColors;
 
 const TASK_BACKGROUND: Color = Color::from_rgb8(248, 250, 252);
 const TASK_BORDER: Color = Color::from_rgb8(226, 232, 240);
@@ -16,6 +17,7 @@ const TASK_COMPLETED_TEXT: Color = Color::from_rgb8(148, 163, 184);
 
 pub fn todo_card<'a>(
     todo: &'a TodoItem,
+    theme_colors: ThemeColors,
     index: usize,
     window_ratio: f32,
     todo_edit_buffer: &'a str,
@@ -36,23 +38,23 @@ pub fn todo_card<'a>(
 
     let edit_button = button(text("Edit"))
         .on_press(AppMessage::ShowTodoEdit(index))
-        .style(move |theme, status| edit_button_style(theme, status, window_ratio));
+        .style(move |_, status| edit_button_style(theme_colors, status, window_ratio));
 
     let edit_input_text = iced::widget::text_input("", todo_edit_buffer)
         .on_input(AppMessage::TodoEditChanged)
-        .style(move |theme, status| edit_input_text_style(theme, status, window_ratio));
+        .style(move |_, status| edit_input_text_style(theme_colors, status, window_ratio));
 
     let save_button = button(text("Save"))
         .on_press(AppMessage::EditTodo(index))
-        .style(move |theme, status| edit_button_style(theme, status, window_ratio));
+        .style(move |_, status| edit_button_style(theme_colors, status, window_ratio));
 
     let cancel_button = button(text("Cancel"))
         .on_press(AppMessage::CancelEditTodo(index))
-        .style(move |theme, status| edit_button_style(theme, status, window_ratio));
+        .style(move |_, status| edit_button_style(theme_colors, status, window_ratio));
 
     let delete_button = button(text("Delete"))
         .on_press(AppMessage::DeleteTodo(index))
-        .style(move |theme, status| delete_button_style(theme, status, window_ratio));
+        .style(move |_, status| delete_button_style(theme_colors, status, window_ratio));
 
     let content = match todo.title_state {
         TodoTitleState::Editing => {
@@ -81,28 +83,28 @@ pub fn todo_card<'a>(
     container(content)
         .center_x(Length::Fixed(360.0 * window_ratio))
         .center_y(Length::Fixed(30.0 * window_ratio))
-        .style(|theme| todo_style(theme, todo))
+        .style(move |_| todo_style(theme_colors, todo))
         .into()
 }
 
 #[inline]
-fn todo_style(theme: &Theme, todo: &TodoItem) -> iced::widget::container::Style {
+fn todo_style(theme_colors: ThemeColors, todo: &TodoItem) -> iced::widget::container::Style {
     let bg = if todo.status == TodoStatus::Completed {
-        TASK_COMPLETED_BACKGROUND
+        theme_colors.task_completed_bg
     } else {
-        TASK_BACKGROUND
+        theme_colors.task_bg
     };
 
     let task_border_color = if todo.status == TodoStatus::Completed {
-        TASK_COMPLETED_BORDER
+        theme_colors.task_completed_border
     } else {
-        TASK_BORDER
+        theme_colors.task_border
     };
 
     let text_color = if todo.status == TodoStatus::Completed {
-        TASK_COMPLETED_TEXT
+        theme_colors.task_completed_text
     } else {
-        TASK_TEXT
+        theme_colors.task_text
     };
 
     iced::widget::container::Style {
@@ -119,14 +121,14 @@ fn todo_style(theme: &Theme, todo: &TodoItem) -> iced::widget::container::Style 
 
 #[inline]
 fn edit_button_style(
-    theme: &iced::Theme,
+    theme_colors: ThemeColors,
     status: Status,
     window_ratio: f32,
 ) -> iced::widget::button::Style {
-    let edit_bg = Color::from_rgb8(255, 251, 235);
-    let edit_bg_hover = Color::from_rgb8(254, 243, 199);
-    let edit_text = Color::from_rgb8(146, 64, 14);
-    let edit_border = Color::from_rgb8(245, 158, 11);
+    let edit_bg = theme_colors.amber_bg;
+    let edit_bg_hover = theme_colors.amber_bg_hover;
+    let edit_text = theme_colors.amber_text;
+    let edit_border = theme_colors.amber_border;
 
     Style {
         background: Some(if status == iced::widget::button::Status::Hovered {
@@ -145,19 +147,19 @@ fn edit_button_style(
 }
 
 fn edit_input_text_style(
-    theme: &Theme,
+    theme_colors: ThemeColors,
     status: iced::widget::text_input::Status,
     window_ratio: f32,
 ) -> iced::widget::text_input::Style {
-    let bg = Color::from_rgb8(248, 250, 252);
-    let bg_hover = Color::from_rgb8(241, 245, 249);
+    let bg = theme_colors.input_bg;
+    let bg_hover = theme_colors.input_bg_hover;
 
-    let border = Color::from_rgb8(226, 232, 240);
-    let border_hover = Color::from_rgb8(203, 213, 225);
-    let border_focused = Color::from_rgb8(147, 197, 253);
+    let border = theme_colors.input_border;
+    let border_hover = theme_colors.input_border_hover;
+    let border_focused = theme_colors.input_border_focused;
 
-    let text = Color::from_rgb8(30, 41, 59);
-    let placeholder = Color::from_rgb8(148, 163, 184);
+    let text = theme_colors.text_main;
+    let placeholder = theme_colors.text_placeholder;
     let icon = Color::from_rgb8(100, 116, 139);
     let selection = Color::from_rgb8(191, 219, 254);
 
@@ -183,13 +185,13 @@ fn edit_input_text_style(
 
 #[inline]
 fn delete_button_style(
-    theme: &iced::Theme,
+    theme_colors: ThemeColors,
     status: Status,
     window_ratio: f32,
 ) -> iced::widget::button::Style {
-    let bg = Color::from_rgb8(254, 226, 226);
-    let hover = Color::from_rgb8(254, 202, 202);
-    let text = Color::from_rgb8(185, 28, 28);
+    let bg = theme_colors.red_bg;
+    let hover = theme_colors.red_bg_hover;
+    let text = theme_colors.red_text;
 
     Style {
         background: Some(if status == iced::widget::button::Status::Hovered {

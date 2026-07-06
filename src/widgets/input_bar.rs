@@ -3,13 +3,18 @@ use iced::widget::button::{Status, Style};
 use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Theme};
 
-use crate::app::AppMessage;
+use crate::app::{App, AppMessage};
 use crate::tasks::{TodoItem, TodoStatus};
+use crate::theme::{AppTheme, ThemeColors};
 
-pub fn input_bar<'a>(todo_input: &str, window_ratio: f32) -> iced::Element<'a, AppMessage> {
+pub fn input_bar<'a>(app: &'a App, todo_input: &str) -> iced::Element<'a, AppMessage> {
+    let window_ratio = app.window_ratio;
+    let theme = app.theme;
+    let theme_colors = app.theme.colors();
+
     let input_text = iced::widget::text_input("Enter new todo", &todo_input)
         .on_input(AppMessage::TodoInputChanged)
-        .style(input_text_style);
+        .style(move |_, status| input_text_style(theme_colors, status));
 
     row![
         input_text,
@@ -23,13 +28,13 @@ pub fn input_bar<'a>(todo_input: &str, window_ratio: f32) -> iced::Element<'a, A
 
 #[inline]
 fn input_text_style(
-    theme: &iced::Theme,
+    theme_colors: ThemeColors,
     status: iced::widget::text_input::Status,
 ) -> iced::widget::text_input::Style {
-    let bg = Color::from_rgb8(248, 250, 252);
-    let border = Color::from_rgb8(226, 232, 240);
-    let text = Color::from_rgb8(30, 41, 59);
-    let placeholder = Color::from_rgb8(148, 163, 184);
+    let bg = theme_colors.input_bg;
+    let border = theme_colors.input_border;
+    let text = theme_colors.text_main;
+    let placeholder = theme_colors.text_placeholder;
 
     iced::widget::text_input::Style {
         background: bg.into(),
