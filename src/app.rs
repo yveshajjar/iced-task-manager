@@ -9,18 +9,18 @@ use strum::IntoEnumIterator;
 
 use crate::app::AppMessage::AppStart;
 use crate::pages::settings::settings_page;
-use crate::pages::tasks::tasks_page;
+use crate::pages::todos::todos_page;
 use crate::storage::{load_theme, save_theme};
-use crate::tasks::TodoTitleState::{Editing, Viewing};
-use crate::tasks::{TodoStatus, TodoTitleState};
 use crate::theme::{AppTheme, ThemeColors};
+use crate::todo::TodoTitleState::{Editing, Viewing};
+use crate::todo::{TodoPriority, TodoStatus, TodoTitleState};
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
 
 use super::storage;
-use super::tasks::TodoFilter;
-use super::tasks::TodoItem;
+use super::todo::Todo;
+use super::todo::TodoFilter;
 
 pub struct App {
     // App pages
@@ -34,7 +34,7 @@ pub struct App {
     pub window_size: Vector,
 
     // Task properties
-    pub todos: Vec<TodoItem>,
+    pub todos: Vec<Todo>,
     pub todo_input_buffer: String,
     pub todo_edit_buffer: String,
     pub old_todo_title: String,
@@ -65,6 +65,7 @@ pub enum AppMessage {
     DeleteTodo(usize),
     ClearCompletedTodos,
     TodoFilterChanged(TodoFilter),
+    TodoPriorityChanged(usize, TodoPriority),
 }
 
 impl Default for App {
@@ -117,10 +118,11 @@ impl App {
                     return Task::none();
                 }
 
-                self.todos.push(TodoItem {
+                self.todos.push(Todo {
                     title: self.todo_input_buffer.clone(),
-                    status: TodoStatus::Active,
                     title_state: Viewing,
+                    status: TodoStatus::Active,
+                    priority: TodoPriority::Medium,
                 });
                 self.todo_input_buffer.clear();
 
@@ -192,6 +194,13 @@ impl App {
 
                 Task::none()
             }
+            TodoPriorityChanged(index, priority) => {
+                let todo = &mut self.todos[index];
+
+                todo.priority = priority;
+
+                Task::none()
+            }
         }
     }
 
@@ -219,7 +228,7 @@ impl App {
         let sidebar = sidebar(self, todos_count);
 
         let current_page = match self.current_page {
-            AppPage::Tasks(filter) => tasks_page(self, filter),
+            AppPage::Tasks(filter) => todos_page(self, filter),
             AppPage::Settings => settings_page(self),
         };
 

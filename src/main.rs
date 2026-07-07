@@ -1,5 +1,5 @@
 pub mod app;
-pub mod tasks;
+pub mod todo;
 pub mod storage;
 pub mod pages;
 pub mod theme;

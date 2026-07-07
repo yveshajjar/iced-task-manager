@@ -1,22 +1,8 @@
 [
   {
-    "title": "Hey",
-    "status": "Completed",
-    "title_state": "Viewing"
-  },
-  {
-    "title": "5",
+    "title": "Hello",
+    "title_state": "Viewing",
     "status": "Active",
-    "title_state": "Viewing"
-  },
-  {
-    "title": "Hello task",
-    "status": "Active",
-    "title_state": "Viewing"
-  },
-  {
-    "title": "Hello World",
-    "status": "Active",
-    "title_state": "Viewing"
+    "priority": "High"
   }
 ]

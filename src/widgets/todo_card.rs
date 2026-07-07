@@ -4,19 +4,11 @@ use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Theme};
 
 use crate::app::AppMessage;
-use crate::tasks::{TodoItem, TodoStatus, TodoTitleState};
 use crate::theme::ThemeColors;
-
-const TASK_BACKGROUND: Color = Color::from_rgb8(248, 250, 252);
-const TASK_BORDER: Color = Color::from_rgb8(226, 232, 240);
-const TASK_TEXT: Color = Color::from_rgb8(30, 41, 59);
-
-const TASK_COMPLETED_BACKGROUND: Color = Color::from_rgb8(250, 250, 250);
-const TASK_COMPLETED_BORDER: Color = Color::from_rgb8(229, 231, 235);
-const TASK_COMPLETED_TEXT: Color = Color::from_rgb8(148, 163, 184);
+use crate::todo::{Todo, TodoPriority, TodoStatus, TodoTitleState};
 
 pub fn todo_card<'a>(
-    todo: &'a TodoItem,
+    todo: &'a Todo,
     theme_colors: ThemeColors,
     index: usize,
     window_ratio: f32,
@@ -43,6 +35,18 @@ pub fn todo_card<'a>(
     let edit_input_text = iced::widget::text_input("", todo_edit_buffer)
         .on_input(AppMessage::TodoEditChanged)
         .style(move |_, status| edit_input_text_style(theme_colors, status, window_ratio));
+
+    let priority_card = iced::widget::PickList::new(
+        [TodoPriority::High, TodoPriority::Medium, TodoPriority::Low],
+        Some(todo.priority),
+        move |priority| AppMessage::TodoPriorityChanged(index, priority),
+    )
+    .style(move |_, status| picklist_style(theme_colors, todo.priority, status, window_ratio))
+    .menu_style(move |_| picklist_menu_style(theme_colors))
+    .width(Length::Shrink)
+    .padding([4.0 * window_ratio, 10.0 * window_ratio]);
+
+    let priority_card_wrapper = container(priority_card).width(Length::Shrink);
 
     let save_button = button(text("Save"))
         .on_press(AppMessage::EditTodo(index))
@@ -71,6 +75,7 @@ pub fn todo_card<'a>(
                 checkbox,
                 todo_title,
                 space().width(Length::Fill),
+                priority_card_wrapper,
                 edit_button,
                 delete_button
             ]
@@ -88,7 +93,7 @@ pub fn todo_card<'a>(
 }
 
 #[inline]
-fn todo_style(theme_colors: ThemeColors, todo: &TodoItem) -> iced::widget::container::Style {
+fn todo_style(theme_colors: ThemeColors, todo: &Todo) -> iced::widget::container::Style {
     let bg = if todo.status == TodoStatus::Completed {
         theme_colors.task_completed_bg
     } else {
@@ -143,6 +148,58 @@ fn edit_button_style(
             ..Default::default()
         },
         ..Default::default()
+    }
+}
+
+#[inline]
+pub fn picklist_style(
+    colors: ThemeColors,
+    priority: TodoPriority,
+    status: iced::widget::pick_list::Status,
+    window_ratio: f32,
+) -> iced::widget::pick_list::Style {
+    let (priority_bg, priority_text, priority_border) = priority.colors(colors);
+
+    let border_color = match status {
+        iced::widget::pick_list::Status::Active => priority_border,
+
+        iced::widget::pick_list::Status::Hovered => priority_border,
+
+        iced::widget::pick_list::Status::Opened { .. } => colors.picklist_border_opened,
+    };
+
+    iced::widget::pick_list::Style {
+        text_color: priority_text,
+        placeholder_color: colors.picklist_placeholder,
+        handle_color: priority_text,
+        background: priority_bg.into(),
+        border: Border {
+            color: border_color,
+            width: 1.0 * window_ratio,
+            radius: Radius::new(999.0 * window_ratio),
+        },
+    }
+}
+
+use iced::widget::overlay::menu;
+
+#[inline]
+pub fn picklist_menu_style(colors: ThemeColors) -> menu::Style {
+    menu::Style {
+        text_color: colors.text_main,
+        background: colors.picklist_menu_bg.into(),
+        border: Border {
+            color: colors.picklist_menu_border,
+            width: 1.0,
+            radius: Radius::new(8.0),
+        },
+        selected_text_color: colors.picklist_menu_selected_text,
+        selected_background: colors.picklist_menu_selected_bg.into(),
+        shadow: iced::Shadow {
+            color: Color::from_rgba8(0, 0, 0, 0.1),
+            offset: iced::Vector::new(0.0, 2.0),
+            blur_radius: 4.0,
+        },
     }
 }
 

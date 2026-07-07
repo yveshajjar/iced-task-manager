@@ -30,6 +30,32 @@ pub struct ThemeColors {
     pub task_completed_border: Color,
     pub task_completed_text: Color,
 
+    pub priority_low_bg: Color,
+    pub priority_low_text: Color,
+    pub priority_low_border: Color,
+
+    pub priority_medium_bg: Color,
+    pub priority_medium_text: Color,
+    pub priority_medium_border: Color,
+
+    pub priority_high_bg: Color,
+    pub priority_high_text: Color,
+    pub priority_high_border: Color,
+
+    pub picklist_bg: Color,
+    pub picklist_bg_hover: Color,
+    pub picklist_border: Color,
+    pub picklist_border_hover: Color,
+    pub picklist_border_opened: Color,
+    pub picklist_text: Color,
+    pub picklist_placeholder: Color,
+    pub picklist_handle: Color,
+
+    pub picklist_menu_bg: Color,
+    pub picklist_menu_border: Color,
+    pub picklist_menu_selected_bg: Color,
+    pub picklist_menu_selected_text: Color,
+
     pub input_bg: Color,
     pub input_bg_hover: Color,
     pub input_border: Color,
@@ -75,6 +101,35 @@ const LIGHT: ThemeColors = ThemeColors {
     task_completed_border: Color::from_rgb8(229, 231, 235),
     task_completed_text: Color::from_rgb8(148, 163, 184),
 
+    // Priority: Low
+    priority_low_bg: Color::from_rgb8(240, 253, 244),
+    priority_low_text: Color::from_rgb8(22, 101, 52),
+    priority_low_border: Color::from_rgb8(187, 247, 208),
+
+    // Priority: Medium
+    priority_medium_bg: Color::from_rgb8(255, 251, 235),
+    priority_medium_text: Color::from_rgb8(146, 64, 14),
+    priority_medium_border: Color::from_rgb8(253, 230, 138),
+
+    // Priority: High
+    priority_high_bg: Color::from_rgb8(254, 242, 242),
+    priority_high_text: Color::from_rgb8(185, 28, 28),
+    priority_high_border: Color::from_rgb8(254, 202, 202),
+
+    picklist_bg: Color::from_rgb8(248, 250, 252),
+    picklist_bg_hover: Color::from_rgb8(241, 245, 249),
+    picklist_border: Color::from_rgb8(226, 232, 240),
+    picklist_border_hover: Color::from_rgb8(203, 213, 225),
+    picklist_border_opened: Color::from_rgb8(147, 197, 253),
+    picklist_text: Color::from_rgb8(30, 41, 59),
+    picklist_placeholder: Color::from_rgb8(148, 163, 184),
+    picklist_handle: Color::from_rgb8(100, 116, 139),
+
+    picklist_menu_bg: Color::from_rgb8(255, 255, 255),
+    picklist_menu_border: Color::from_rgb8(226, 232, 240),
+    picklist_menu_selected_bg: Color::from_rgb8(239, 246, 255),
+    picklist_menu_selected_text: Color::from_rgb8(37, 99, 235),
+
     input_bg: Color::from_rgb8(248, 250, 252),
     input_bg_hover: Color::from_rgb8(241, 245, 249),
     input_border: Color::from_rgb8(226, 232, 240),
@@ -119,6 +174,35 @@ const DARK: ThemeColors = ThemeColors {
     task_completed_bg: Color::from_rgb8(24, 33, 49),
     task_completed_border: Color::from_rgb8(51, 65, 85),
     task_completed_text: Color::from_rgb8(100, 116, 139),
+
+    // Priority: Low
+    priority_low_bg: Color::from_rgb8(20, 83, 45),
+    priority_low_text: Color::from_rgb8(187, 247, 208),
+    priority_low_border: Color::from_rgb8(34, 197, 94),
+
+    // Priority: Medium
+    priority_medium_bg: Color::from_rgb8(69, 46, 20),
+    priority_medium_text: Color::from_rgb8(253, 230, 138),
+    priority_medium_border: Color::from_rgb8(120, 53, 15),
+
+    // Priority: High
+    priority_high_bg: Color::from_rgb8(69, 26, 26),
+    priority_high_text: Color::from_rgb8(252, 165, 165),
+    priority_high_border: Color::from_rgb8(127, 29, 29),
+
+    picklist_bg: Color::from_rgb8(30, 41, 59),
+    picklist_bg_hover: Color::from_rgb8(51, 65, 85),
+    picklist_border: Color::from_rgb8(71, 85, 105),
+    picklist_border_hover: Color::from_rgb8(100, 116, 139),
+    picklist_border_opened: Color::from_rgb8(96, 165, 250),
+    picklist_text: Color::from_rgb8(226, 232, 240),
+    picklist_placeholder: Color::from_rgb8(100, 116, 139),
+    picklist_handle: Color::from_rgb8(148, 163, 184),
+
+    picklist_menu_bg: Color::from_rgb8(30, 41, 59),
+    picklist_menu_border: Color::from_rgb8(71, 85, 105),
+    picklist_menu_selected_bg: Color::from_rgb8(37, 99, 235),
+    picklist_menu_selected_text: Color::from_rgb8(219, 234, 254),
 
     input_bg: Color::from_rgb8(30, 41, 59),
     input_bg_hover: Color::from_rgb8(51, 65, 85),

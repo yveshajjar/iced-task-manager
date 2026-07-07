@@ -5,7 +5,7 @@ use iced::{Border, Color, Element, Length};
 use strum::IntoEnumIterator;
 
 use crate::app::{App, AppMessage, AppPage};
-use crate::tasks::{TodoFilter, TodoItem, TodoStatus, TodoTitleState};
+use crate::todo::{TodoFilter, Todo, TodoStatus, TodoTitleState};
 use crate::theme::{AppTheme, ThemeColors};
 
 pub fn sidebar<'a>(app: &'a App, todos_count: Vec<usize>) -> Element<'a, AppMessage> {

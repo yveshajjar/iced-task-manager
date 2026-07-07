@@ -4,7 +4,7 @@ use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Theme};
 
 use crate::app::{App, AppMessage};
-use crate::tasks::{TodoItem, TodoStatus};
+use crate::todo::{Todo, TodoStatus};
 use crate::theme::{AppTheme, ThemeColors};
 
 pub fn input_bar<'a>(app: &'a App, todo_input: &str) -> iced::Element<'a, AppMessage> {

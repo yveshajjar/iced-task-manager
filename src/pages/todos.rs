@@ -1,27 +1,17 @@
-use iced::advanced::graphics::core::Element;
 use iced::border::Radius;
-use iced::widget::button::{Status, Style};
 use iced::widget::scrollable::{AutoScroll, Rail, Scroller};
 use iced::widget::{button, column, container, row, space, text};
-use iced::window::{Id, maximize, *};
 use iced::{Border, Color, Length, Shadow, Theme, theme};
-use iced::{Subscription, Task, Vector};
-use strum::IntoEnumIterator;
 
-use crate::app::AppMessage::AppStart;
 use crate::app::{App, AppMessage};
-use crate::tasks::TodoTitleState::{Editing, Viewing};
-use crate::tasks::{TodoStatus, TodoTitleState};
-use crate::theme::AppTheme;
 use crate::widgets::input_bar::input_bar;
-use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
 
 use crate::storage;
-use crate::tasks::TodoFilter;
-use crate::tasks::TodoItem;
+use crate::todo::TodoFilter;
+use crate::todo::Todo;
 
-pub fn tasks_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element<'a, AppMessage> {
+pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element<'a, AppMessage> {
     let theme_colors = app.theme.colors();
 
     let todos_list: Vec<_> = app

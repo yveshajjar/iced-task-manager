@@ -5,7 +5,7 @@ use iced::{Border, Color, Length, Theme};
 use strum::IntoEnumIterator;
 
 use crate::app::AppMessage;
-use crate::tasks::{TodoFilter, TodoItem, TodoStatus};
+use crate::todo::{TodoFilter, Todo, TodoStatus};
 
 pub fn filter_bar<'a>(
     window_ratio: f32,

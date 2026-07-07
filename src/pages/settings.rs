@@ -1,7 +1,6 @@
 use crate::app::AppPage;
 use crate::theme::AppTheme;
 use crate::theme::ThemeColors;
-use iced::advanced::graphics::text::cosmic_text::skrifa::raw::tables::stat;
 use iced::border::Radius;
 use iced::widget::button::{Status, Style};
 use iced::widget::scrollable::{AutoScroll, Rail, Scroller};
@@ -13,15 +12,15 @@ use strum::IntoEnumIterator;
 
 use crate::app::AppMessage::AppStart;
 use crate::app::{App, AppMessage};
-use crate::tasks::TodoTitleState::{Editing, Viewing};
-use crate::tasks::{TodoStatus, TodoTitleState};
+use crate::todo::TodoTitleState::{Editing, Viewing};
+use crate::todo::{TodoStatus, TodoTitleState};
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
 
 use crate::storage;
-use crate::tasks::TodoFilter;
-use crate::tasks::TodoItem;
+use crate::todo::TodoFilter;
+use crate::todo::Todo;
 
 pub fn settings_page<'a>(app: &'a App) -> iced::Element<'a, AppMessage> {
     let window_ratio = app.window_ratio;

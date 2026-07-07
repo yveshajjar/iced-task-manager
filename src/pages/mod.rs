@@ -1,2 +1,2 @@
-pub mod tasks;
+pub mod todos;
 pub mod settings;
