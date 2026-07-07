@@ -127,8 +127,8 @@ const LIGHT: ThemeColors = ThemeColors {
 
     picklist_menu_bg: Color::from_rgb8(255, 255, 255),
     picklist_menu_border: Color::from_rgb8(226, 232, 240),
-    picklist_menu_selected_bg: Color::from_rgb8(239, 246, 255),
-    picklist_menu_selected_text: Color::from_rgb8(37, 99, 235),
+    picklist_menu_selected_bg: Color::from_rgb8(241, 245, 249),
+    picklist_menu_selected_text: Color::from_rgb8(30, 41, 59),
 
     input_bg: Color::from_rgb8(248, 250, 252),
     input_bg_hover: Color::from_rgb8(241, 245, 249),
@@ -201,8 +201,8 @@ const DARK: ThemeColors = ThemeColors {
 
     picklist_menu_bg: Color::from_rgb8(30, 41, 59),
     picklist_menu_border: Color::from_rgb8(71, 85, 105),
-    picklist_menu_selected_bg: Color::from_rgb8(37, 99, 235),
-    picklist_menu_selected_text: Color::from_rgb8(219, 234, 254),
+    picklist_menu_selected_bg: Color::from_rgb8(241, 245, 249),
+    picklist_menu_selected_text: Color::from_rgb8(30, 41, 59),
 
     input_bg: Color::from_rgb8(30, 41, 59),
     input_bg_hover: Color::from_rgb8(51, 65, 85),

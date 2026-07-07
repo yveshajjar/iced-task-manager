@@ -165,7 +165,7 @@ pub fn picklist_style(
 
         iced::widget::pick_list::Status::Hovered => priority_border,
 
-        iced::widget::pick_list::Status::Opened { .. } => colors.picklist_border_opened,
+        iced::widget::pick_list::Status::Opened { .. } => priority_border,
     };
 
     iced::widget::pick_list::Style {

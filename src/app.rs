@@ -38,6 +38,8 @@ pub struct App {
     pub todo_input_buffer: String,
     pub todo_edit_buffer: String,
     pub old_todo_title: String,
+
+    pub new_todo_priority: TodoPriority,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -66,6 +68,7 @@ pub enum AppMessage {
     ClearCompletedTodos,
     TodoFilterChanged(TodoFilter),
     TodoPriorityChanged(usize, TodoPriority),
+    TodoPriorityAdded(TodoPriority),
 }
 
 impl Default for App {
@@ -79,6 +82,7 @@ impl Default for App {
             todo_input_buffer: String::new(),
             todo_edit_buffer: String::new(),
             old_todo_title: String::new(),
+            new_todo_priority: TodoPriority::Medium,
         }
     }
 }
@@ -122,9 +126,11 @@ impl App {
                     title: self.todo_input_buffer.clone(),
                     title_state: Viewing,
                     status: TodoStatus::Active,
-                    priority: TodoPriority::Medium,
+                    priority: self.new_todo_priority,
                 });
+
                 self.todo_input_buffer.clear();
+                self.new_todo_priority = TodoPriority::Medium;
 
                 storage::save_todos(&self.todos);
 
@@ -198,6 +204,12 @@ impl App {
                 let todo = &mut self.todos[index];
 
                 todo.priority = priority;
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            TodoPriorityAdded(priority) => {
+                self.new_todo_priority = priority;
 
                 Task::none()
             }

@@ -9,6 +9,7 @@ pub struct Todo {
     pub title: String,
     pub title_state: TodoTitleState,
     pub status: TodoStatus,
+    #[serde(default)]
     pub priority: TodoPriority,
 }
 
@@ -42,9 +43,10 @@ pub enum TodoTitleState {
     Editing,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Display)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Display, Default)]
 pub enum TodoPriority {
     Low,
+    #[default]
     Medium,
     High,
 }
