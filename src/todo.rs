@@ -1,5 +1,6 @@
 use iced::Color;
 use serde::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
 use crate::theme::ThemeColors;
@@ -31,7 +32,7 @@ impl TodoFilter {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Ord, PartialOrd)]
 pub enum TodoStatus {
     Active,
     Completed,
@@ -43,7 +44,9 @@ pub enum TodoTitleState {
     Editing,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Display, Default)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Display, Default, PartialOrd, Ord,
+)]
 pub enum TodoPriority {
     Low,
     #[default]
@@ -69,6 +72,26 @@ impl TodoPriority {
                 colors.priority_high_text,
                 colors.priority_high_border,
             ),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default, EnumIter)]
+pub enum TodoSort {
+    #[default]
+    Created,
+    PriorityHighFirst,
+    PriorityLowFirst,
+    CompletedLast,
+}
+
+impl std::fmt::Display for TodoSort {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TodoSort::Created => write!(f, "Created"),
+            TodoSort::PriorityHighFirst => write!(f, "Priority: High first"),
+            TodoSort::PriorityLowFirst => write!(f, "Priority: Low first"),
+            TodoSort::CompletedLast => write!(f, "Completed last"),
         }
     }
 }

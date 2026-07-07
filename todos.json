@@ -2,7 +2,7 @@
   {
     "title": "Hello",
     "title_state": "Viewing",
-    "status": "Completed",
+    "status": "Active",
     "priority": "High"
   },
   {
@@ -14,13 +14,13 @@
   {
     "title": "Hello",
     "title_state": "Viewing",
-    "status": "Completed",
+    "status": "Active",
     "priority": "High"
   },
   {
     "title": "New feature",
     "title_state": "Viewing",
-    "status": "Completed",
+    "status": "Active",
     "priority": "Low"
   }
 ]

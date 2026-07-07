@@ -1,4 +1,5 @@
 use iced::border::Radius;
+use iced::overlay::menu;
 use iced::widget::button::{Status, Style};
 use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Theme};
@@ -180,8 +181,6 @@ pub fn picklist_style(
         },
     }
 }
-
-use iced::widget::overlay::menu;
 
 #[inline]
 pub fn picklist_menu_style(colors: ThemeColors) -> menu::Style {

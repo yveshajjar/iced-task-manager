@@ -1,24 +1,47 @@
 use iced::border::Radius;
+use iced::overlay::menu;
 use iced::widget::scrollable::{AutoScroll, Rail, Scroller};
 use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Shadow, Theme, theme};
+use strum::IntoEnumIterator;
 
+use crate::app::AppMessage::TodoSortChanged;
 use crate::app::{App, AppMessage};
+use crate::theme::ThemeColors;
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::todo_card::todo_card;
 
 use crate::storage;
-use crate::todo::TodoFilter;
-use crate::todo::Todo;
+use crate::todo::{Todo, TodoSort};
+use crate::todo::{TodoFilter, TodoPriority};
 
 pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element<'a, AppMessage> {
     let theme_colors = app.theme.colors();
 
-    let todos_list: Vec<_> = app
+    let mut todos_raw: Vec<_> = app
         .todos
         .iter()
         .enumerate()
         .filter(|(_, todo)| current_filter.matches(&todo.status))
+        .collect();
+
+    let has_todos = !todos_raw.is_empty();
+
+    match app.todo_sort {
+        TodoSort::Created => {}
+        TodoSort::PriorityHighFirst => {
+            todos_raw.sort_by_key(|(_, todo)| std::cmp::Reverse(todo.priority));
+        }
+        TodoSort::PriorityLowFirst => {
+            todos_raw.sort_by_key(|(_, todo)| todo.priority);
+        }
+        TodoSort::CompletedLast => {
+            todos_raw.sort_by_key(|(_, todo)| todo.status);
+        }
+    }
+
+    let todos_card_vector: Vec<_> = todos_raw
+        .into_iter()
         .map(|(index, todo)| {
             todo_card(
                 todo,
@@ -30,9 +53,7 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         })
         .collect();
 
-    let has_todos = !todos_list.is_empty();
-
-    let todos_column = column(todos_list)
+    let todos_column = column(todos_card_vector)
         .spacing(2.0 * app.window_ratio)
         .width(Length::Fixed(320.0 * app.window_ratio))
         .height(Length::Fill);
@@ -60,10 +81,31 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         container(empty_state_text)
     };
 
+    let sort_picklist = iced::widget::pick_list(
+        TodoSort::iter().collect::<Vec<_>>(),
+        Some(app.todo_sort),
+        TodoSortChanged,
+    )
+    .width(Length::Shrink)
+    .style(move |_, _| picklist_style(theme_colors, app.window_ratio))
+    .menu_style(move |_| picklist_menu_style(theme_colors));
+
+    let sort_picklist_wrapper = container(sort_picklist).width(Length::Shrink);
+
     column![
         text("My Tasks")
             .size(28.0 * app.window_ratio)
             .color(theme_colors.text_main),
+        container(
+            row![
+                text("Sort by: ")
+                    .size(16.0 * app.window_ratio)
+                    .color(theme_colors.text_main),
+                sort_picklist_wrapper
+            ]
+            .align_y(iced::alignment::Vertical::Center)
+        )
+        .align_y(iced::alignment::Vertical::Center),
         input_bar,
         todos_content,
     ]
@@ -132,6 +174,41 @@ fn scrollable_style(
                     ..Default::default()
                 },
             },
+        },
+    }
+}
+
+#[inline]
+pub fn picklist_style(colors: ThemeColors, window_ratio: f32) -> iced::widget::pick_list::Style {
+    iced::widget::pick_list::Style {
+        text_color: colors.text_main,
+        placeholder_color: colors.picklist_placeholder,
+        handle_color: colors.text_main,
+        background: colors.picklist_menu_bg.into(),
+        border: Border {
+            color: colors.picklist_menu_border,
+            width: 1.0 * window_ratio,
+            radius: Radius::new(999.0 * window_ratio),
+        },
+    }
+}
+
+#[inline]
+pub fn picklist_menu_style(colors: ThemeColors) -> menu::Style {
+    menu::Style {
+        text_color: colors.text_main,
+        background: colors.picklist_menu_bg.into(),
+        border: Border {
+            color: colors.picklist_menu_border,
+            width: 1.0,
+            radius: Radius::new(8.0),
+        },
+        selected_text_color: colors.picklist_menu_selected_text,
+        selected_background: colors.picklist_menu_selected_bg.into(),
+        shadow: iced::Shadow {
+            color: Color::from_rgba8(0, 0, 0, 0.1),
+            offset: iced::Vector::new(0.0, 2.0),
+            blur_radius: 4.0,
         },
     }
 }

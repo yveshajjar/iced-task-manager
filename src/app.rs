@@ -13,7 +13,7 @@ use crate::pages::todos::todos_page;
 use crate::storage::{load_theme, save_theme};
 use crate::theme::{AppTheme, ThemeColors};
 use crate::todo::TodoTitleState::{Editing, Viewing};
-use crate::todo::{TodoPriority, TodoStatus, TodoTitleState};
+use crate::todo::{TodoPriority, TodoSort, TodoStatus, TodoTitleState};
 use crate::widgets::input_bar::input_bar;
 use crate::widgets::sidebar::sidebar;
 use crate::widgets::todo_card::todo_card;
@@ -40,6 +40,8 @@ pub struct App {
     pub old_todo_title: String,
 
     pub new_todo_priority: TodoPriority,
+
+    pub todo_sort: TodoSort,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,6 +71,8 @@ pub enum AppMessage {
     TodoFilterChanged(TodoFilter),
     TodoPriorityChanged(usize, TodoPriority),
     TodoPriorityAdded(TodoPriority),
+
+    TodoSortChanged(TodoSort),
 }
 
 impl Default for App {
@@ -83,6 +87,7 @@ impl Default for App {
             todo_edit_buffer: String::new(),
             old_todo_title: String::new(),
             new_todo_priority: TodoPriority::Medium,
+            todo_sort: TodoSort::Created,
         }
     }
 }
@@ -210,6 +215,11 @@ impl App {
             }
             TodoPriorityAdded(priority) => {
                 self.new_todo_priority = priority;
+
+                Task::none()
+            }
+            TodoSortChanged(sort) => {
+                self.todo_sort = sort;
 
                 Task::none()
             }
