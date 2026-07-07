@@ -11,7 +11,7 @@ pub fn input_bar<'a>(app: &'a App, todo_input: &str) -> iced::Element<'a, AppMes
     let window_ratio = app.window_ratio;
     let theme_colors = app.theme.colors();
 
-    let input_text = iced::widget::text_input("Enter new todo", &todo_input)
+    let input_text = iced::widget::text_input("Enter new todo", todo_input)
         .on_input(AppMessage::TodoInputChanged)
         .style(move |_, status| input_text_style(theme_colors, status));
 

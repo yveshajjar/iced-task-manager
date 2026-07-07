@@ -42,6 +42,8 @@ pub struct App {
     pub new_todo_priority: TodoPriority,
 
     pub todo_sort: TodoSort,
+
+    pub todo_search_buffer: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,6 +75,8 @@ pub enum AppMessage {
     TodoPriorityAdded(TodoPriority),
 
     TodoSortChanged(TodoSort),
+
+    TodoSearchChanged(String),
 }
 
 impl Default for App {
@@ -88,6 +92,7 @@ impl Default for App {
             old_todo_title: String::new(),
             new_todo_priority: TodoPriority::Medium,
             todo_sort: TodoSort::Created,
+            todo_search_buffer: String::new(),
         }
     }
 }
@@ -221,6 +226,10 @@ impl App {
             TodoSortChanged(sort) => {
                 self.todo_sort = sort;
 
+                Task::none()
+            }
+            TodoSearchChanged(search) => {
+                self.todo_search_buffer = search;
                 Task::none()
             }
         }

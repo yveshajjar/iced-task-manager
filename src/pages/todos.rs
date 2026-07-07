@@ -9,6 +9,7 @@ use crate::app::AppMessage::TodoSortChanged;
 use crate::app::{App, AppMessage};
 use crate::theme::ThemeColors;
 use crate::widgets::input_bar::input_bar;
+use crate::widgets::search_bar::search_bar;
 use crate::widgets::todo_card::todo_card;
 
 use crate::storage;
@@ -18,11 +19,14 @@ use crate::todo::{TodoFilter, TodoPriority};
 pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element<'a, AppMessage> {
     let theme_colors = app.theme.colors();
 
+    let search = app.todo_search_buffer.trim().to_lowercase();
+
     let mut todos_raw: Vec<_> = app
         .todos
         .iter()
         .enumerate()
         .filter(|(_, todo)| current_filter.matches(&todo.status))
+        .filter(|(_, todo)| search.is_empty() || todo.title.to_lowercase().contains(&search))
         .collect();
 
     let has_todos = !todos_raw.is_empty();
@@ -40,7 +44,7 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         }
     }
 
-    let todos_card_vector: Vec<_> = todos_raw
+    let todos_card_vec: Vec<_> = todos_raw
         .into_iter()
         .map(|(index, todo)| {
             todo_card(
@@ -53,7 +57,7 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         })
         .collect();
 
-    let todos_column = column(todos_card_vector)
+    let todos_column = column(todos_card_vec)
         .spacing(2.0 * app.window_ratio)
         .width(Length::Fixed(320.0 * app.window_ratio))
         .height(Length::Fill);
@@ -64,6 +68,8 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         .style(scrollable_style);
 
     let input_bar = input_bar(app, &app.todo_input_buffer);
+
+    let search_bar = search_bar(app, &app.todo_search_buffer);
 
     let empty_text = match current_filter {
         TodoFilter::All => "No todos yet. Add your first task above.",
@@ -106,7 +112,8 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
             .align_y(iced::alignment::Vertical::Center)
         )
         .align_y(iced::alignment::Vertical::Center),
-        input_bar,
+        container(input_bar).width(Length::Fixed(370.0 * app.window_ratio)),
+        container(search_bar).width(Length::Fixed(370.0 * app.window_ratio)),
         todos_content,
     ]
     .width(Length::Fill)
