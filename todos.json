@@ -22,5 +22,11 @@
     "title_state": "Viewing",
     "status": "Active",
     "priority": "Low"
+  },
+  {
+    "title": "New task",
+    "title_state": "Viewing",
+    "status": "Active",
+    "priority": "High"
   }
 ]

@@ -5,8 +5,8 @@ use iced::{Border, Color, Element, Length};
 use strum::IntoEnumIterator;
 
 use crate::app::{App, AppMessage, AppPage};
-use crate::todo::{TodoFilter, Todo, TodoStatus, TodoTitleState};
 use crate::theme::{AppTheme, ThemeColors};
+use crate::todo::{Todo, TodoFilter, TodoMessage, TodoStatus, TodoTitleState};
 
 pub fn sidebar<'a>(app: &'a App, todos_count: Vec<usize>) -> Element<'a, AppMessage> {
     let window_ratio = app.window_ratio;
@@ -24,11 +24,12 @@ pub fn sidebar<'a>(app: &'a App, todos_count: Vec<usize>) -> Element<'a, AppMess
                 *count,
                 window_ratio,
             )
+            .map(AppMessage::Todo)
         })
         .collect();
 
     let clear_button = button(container(text("Clear completed")).center(Length::Fill))
-        .on_press(AppMessage::ClearCompletedTodos)
+        .on_press(AppMessage::Todo(TodoMessage::ClearCompleted))
         .width(Length::Fill)
         .height(36.0 * window_ratio)
         .padding(0)
@@ -82,7 +83,7 @@ fn sidebar_filter_button<'a>(
     filter: TodoFilter,
     count: usize,
     window_ratio: f32,
-) -> Element<'a, AppMessage> {
+) -> Element<'a, TodoMessage> {
     let button_text = container(row![
         text(button_text),
         Space::new().width(Length::Fill),
@@ -98,7 +99,7 @@ fn sidebar_filter_button<'a>(
         .style(move |_, status| {
             button_style(theme_colors, filter, current_page, status, window_ratio)
         })
-        .on_press(AppMessage::TodoFilterChanged(filter))
+        .on_press(TodoMessage::FilterChanged(filter))
         .into()
 }
 

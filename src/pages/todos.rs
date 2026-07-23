@@ -5,7 +5,6 @@ use iced::widget::{button, column, container, row, space, text};
 use iced::{Border, Color, Length, Shadow, Theme, theme};
 use strum::IntoEnumIterator;
 
-use crate::app::AppMessage::TodoSortChanged;
 use crate::app::{App, AppMessage};
 use crate::theme::ThemeColors;
 use crate::widgets::input_bar::input_bar;
@@ -13,51 +12,18 @@ use crate::widgets::search_bar::search_bar;
 use crate::widgets::todo_card::todo_card;
 
 use crate::storage;
+use crate::todo::TodoMessage;
 use crate::todo::{Todo, TodoSort};
 use crate::todo::{TodoFilter, TodoPriority};
 
 pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element<'a, AppMessage> {
     let theme_colors = app.theme.colors();
 
-    let search = app.todo_search_buffer.trim().to_lowercase();
+    let visible_todo_cards = visible_todo_cards(app, current_filter, &app.todo_search_buffer);
 
-    let mut todos_raw: Vec<_> = app
-        .todos
-        .iter()
-        .enumerate()
-        .filter(|(_, todo)| current_filter.matches(&todo.status))
-        .filter(|(_, todo)| search.is_empty() || todo.title.to_lowercase().contains(&search))
-        .collect();
+    let has_todos = !visible_todo_cards.is_empty();
 
-    let has_todos = !todos_raw.is_empty();
-
-    match app.todo_sort {
-        TodoSort::Created => {}
-        TodoSort::PriorityHighFirst => {
-            todos_raw.sort_by_key(|(_, todo)| std::cmp::Reverse(todo.priority));
-        }
-        TodoSort::PriorityLowFirst => {
-            todos_raw.sort_by_key(|(_, todo)| todo.priority);
-        }
-        TodoSort::CompletedLast => {
-            todos_raw.sort_by_key(|(_, todo)| todo.status);
-        }
-    }
-
-    let todos_card_vec: Vec<_> = todos_raw
-        .into_iter()
-        .map(|(index, todo)| {
-            todo_card(
-                todo,
-                theme_colors,
-                index,
-                app.window_ratio,
-                &app.todo_edit_buffer,
-            )
-        })
-        .collect();
-
-    let todos_column = column(todos_card_vec)
+    let todos_column = column(visible_todo_cards)
         .spacing(2.0 * app.window_ratio)
         .width(Length::Fixed(320.0 * app.window_ratio))
         .height(Length::Fill);
@@ -67,9 +33,9 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
         .height(Length::Fixed(460.0 * app.window_ratio))
         .style(scrollable_style);
 
-    let input_bar = input_bar(app, &app.todo_input_buffer);
+    let input_bar = input_bar(app, &app.todo_input_buffer).map(AppMessage::Todo);
 
-    let search_bar = search_bar(app, &app.todo_search_buffer);
+    let search_bar = search_bar(app, &app.todo_search_buffer).map(AppMessage::Todo);
 
     let empty_text = match current_filter {
         TodoFilter::All => "No todos yet. Add your first task above.",
@@ -90,7 +56,7 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
     let sort_picklist = iced::widget::pick_list(
         TodoSort::iter().collect::<Vec<_>>(),
         Some(app.todo_sort),
-        TodoSortChanged,
+        |sort| AppMessage::Todo(TodoMessage::SortChanged(sort)),
     )
     .width(Length::Shrink)
     .style(move |_, _| picklist_style(theme_colors, app.window_ratio))
@@ -120,6 +86,58 @@ pub fn todos_page<'a>(app: &'a App, current_filter: TodoFilter) -> iced::Element
     .align_x(iced::alignment::Horizontal::Center)
     .spacing(18.0 * app.window_ratio)
     .into()
+}
+
+fn visible_todo_cards<'a>(
+    app: &'a App,
+    current_filter: TodoFilter,
+    search: &str,
+) -> Vec<iced::Element<'a, AppMessage>> {
+    let theme_colors = app.theme.colors();
+    let search = search.trim().to_lowercase();
+
+    let unfiltered_todos = app.todos.iter().enumerate();
+
+    let filtered_todos = unfiltered_todos.filter(|(_, todo)| current_filter.matches(&todo.status));
+
+    let mut searched_todos: Vec<_> = filtered_todos
+        .filter(|(_, todo)| matches_search(todo, &search))
+        .collect();
+
+    sort_todos(&mut searched_todos, app.todo_sort);
+
+    searched_todos
+        .into_iter()
+        .map(|(index, todo)| {
+            todo_card(
+                todo,
+                theme_colors,
+                index,
+                app.window_ratio,
+                &app.todo_edit_buffer,
+            )
+            .map(AppMessage::Todo)
+        })
+        .collect::<Vec<_>>()
+}
+
+fn sort_todos(todos: &mut Vec<(usize, &Todo)>, sort: TodoSort) {
+    match sort {
+        TodoSort::Created => {}
+        TodoSort::PriorityHighFirst => {
+            todos.sort_by_key(|(_, todo)| std::cmp::Reverse(todo.priority));
+        }
+        TodoSort::PriorityLowFirst => {
+            todos.sort_by_key(|(_, todo)| todo.priority);
+        }
+        TodoSort::CompletedLast => {
+            todos.sort_by_key(|(_, todo)| todo.status);
+        }
+    }
+}
+
+fn matches_search(todo: &Todo, normalized_search: &str) -> bool {
+    normalized_search.is_empty() || todo.title.to_lowercase().contains(normalized_search)
 }
 
 #[inline]

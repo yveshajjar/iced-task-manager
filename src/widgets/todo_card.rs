@@ -6,7 +6,7 @@ use iced::{Border, Color, Length, Theme};
 
 use crate::app::AppMessage;
 use crate::theme::ThemeColors;
-use crate::todo::{Todo, TodoPriority, TodoStatus, TodoTitleState};
+use crate::todo::{Todo, TodoMessage, TodoPriority, TodoStatus, TodoTitleState};
 
 pub fn todo_card<'a>(
     todo: &'a Todo,
@@ -14,10 +14,10 @@ pub fn todo_card<'a>(
     index: usize,
     window_ratio: f32,
     todo_edit_buffer: &'a str,
-) -> iced::Element<'a, AppMessage> {
+) -> iced::Element<'a, TodoMessage> {
     let checkbox =
         iced::widget::checkbox(todo.status == TodoStatus::Completed).on_toggle(move |completed| {
-            AppMessage::TodoToggled(
+            TodoMessage::Toggled(
                 index,
                 if completed {
                     TodoStatus::Completed
@@ -30,17 +30,17 @@ pub fn todo_card<'a>(
     let todo_title = text(&todo.title);
 
     let edit_button = button(text("Edit"))
-        .on_press(AppMessage::ShowTodoEdit(index))
+        .on_press(TodoMessage::ShowEdit(index))
         .style(move |_, status| edit_button_style(theme_colors, status, window_ratio));
 
     let edit_input_text = iced::widget::text_input("", todo_edit_buffer)
-        .on_input(AppMessage::TodoEditChanged)
+        .on_input(TodoMessage::EditChanged)
         .style(move |_, status| edit_input_text_style(theme_colors, status, window_ratio));
 
     let priority_card = iced::widget::PickList::new(
         [TodoPriority::High, TodoPriority::Medium, TodoPriority::Low],
         Some(todo.priority),
-        move |priority| AppMessage::TodoPriorityChanged(index, priority),
+        move |priority| TodoMessage::PriorityChanged(index, priority),
     )
     .style(move |_, status| picklist_style(theme_colors, todo.priority, status, window_ratio))
     .menu_style(move |_| picklist_menu_style(theme_colors))
@@ -50,15 +50,15 @@ pub fn todo_card<'a>(
     let priority_card_wrapper = container(priority_card).width(Length::Shrink);
 
     let save_button = button(text("Save"))
-        .on_press(AppMessage::EditTodo(index))
+        .on_press(TodoMessage::Edit(index))
         .style(move |_, status| edit_button_style(theme_colors, status, window_ratio));
 
     let cancel_button = button(text("Cancel"))
-        .on_press(AppMessage::CancelEditTodo(index))
+        .on_press(TodoMessage::CancelEdit(index))
         .style(move |_, status| edit_button_style(theme_colors, status, window_ratio));
 
     let delete_button = button(text("Delete"))
-        .on_press(AppMessage::DeleteTodo(index))
+        .on_press(TodoMessage::Delete(index))
         .style(move |_, status| delete_button_style(theme_colors, status, window_ratio));
 
     let content = match todo.title_state {

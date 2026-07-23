@@ -1,9 +1,6 @@
-use iced::border::Radius;
-use iced::widget::button::{Status, Style};
-use iced::widget::scrollable::{AutoScroll, Rail, Scroller};
-use iced::widget::{button, column, container, row, space, text};
-use iced::window::{self, Id, maximize, *};
-use iced::{Border, Color, Length, Shadow, Theme, theme};
+use iced::Length;
+use iced::widget::{container, row};
+use iced::window::Id;
 use iced::{Element, Subscription, Task, Vector};
 use strum::IntoEnumIterator;
 
@@ -11,12 +8,10 @@ use crate::app::AppMessage::AppStart;
 use crate::pages::settings::settings_page;
 use crate::pages::todos::todos_page;
 use crate::storage::{load_theme, save_theme};
-use crate::theme::{AppTheme, ThemeColors};
-use crate::todo::TodoTitleState::{Editing, Viewing};
-use crate::todo::{TodoPriority, TodoSort, TodoStatus, TodoTitleState};
-use crate::widgets::input_bar::input_bar;
+use crate::theme::AppTheme;
+use crate::todo::TodoTitleState::Viewing;
+use crate::todo::{TodoMessage, TodoPriority, TodoSort, TodoStatus, TodoTitleState};
 use crate::widgets::sidebar::sidebar;
-use crate::widgets::todo_card::todo_card;
 
 use super::storage;
 use super::todo::Todo;
@@ -60,23 +55,7 @@ pub enum AppMessage {
     PageChanged(AppPage),
     ThemeChanged(AppTheme),
 
-    // Todo related messages
-    AddTodo,
-    TodoInputChanged(String),
-    TodoToggled(usize, TodoStatus),
-    ShowTodoEdit(usize),
-    TodoEditChanged(String),
-    EditTodo(usize),
-    CancelEditTodo(usize),
-    DeleteTodo(usize),
-    ClearCompletedTodos,
-    TodoFilterChanged(TodoFilter),
-    TodoPriorityChanged(usize, TodoPriority),
-    TodoPriorityAdded(TodoPriority),
-
-    TodoSortChanged(TodoSort),
-
-    TodoSearchChanged(String),
+    Todo(TodoMessage),
 }
 
 impl Default for App {
@@ -127,111 +106,7 @@ impl App {
 
                 Task::none()
             }
-            AddTodo => {
-                if self.todo_input_buffer.trim().is_empty() {
-                    return Task::none();
-                }
-
-                self.todos.push(Todo {
-                    title: self.todo_input_buffer.clone(),
-                    title_state: Viewing,
-                    status: TodoStatus::Active,
-                    priority: self.new_todo_priority,
-                });
-
-                self.todo_input_buffer.clear();
-                self.new_todo_priority = TodoPriority::Medium;
-
-                storage::save_todos(&self.todos);
-
-                Task::none()
-            }
-            TodoInputChanged(input) => {
-                self.todo_input_buffer = input;
-                Task::none()
-            }
-            TodoToggled(index, status) => {
-                let todo = &mut self.todos[index];
-                todo.status = status;
-
-                storage::save_todos(&self.todos);
-
-                Task::none()
-            }
-            ShowTodoEdit(index) => {
-                let todo = &mut self.todos[index];
-
-                self.old_todo_title = todo.title.clone();
-                todo.title_state = TodoTitleState::Editing;
-
-                Task::none()
-            }
-            TodoEditChanged(title) => {
-                self.todo_edit_buffer = title;
-
-                Task::none()
-            }
-            EditTodo(index) => {
-                let todo = &mut self.todos[index];
-
-                todo.title = self.todo_edit_buffer.clone();
-
-                self.todo_edit_buffer.clear();
-                self.old_todo_title.clear();
-                todo.title_state = TodoTitleState::Viewing;
-
-                storage::save_todos(&self.todos);
-
-                Task::none()
-            }
-            CancelEditTodo(usize) => {
-                let todo = &mut self.todos[usize];
-
-                todo.title = self.old_todo_title.clone();
-                self.todo_edit_buffer.clear();
-                self.old_todo_title.clear();
-                todo.title_state = TodoTitleState::Viewing;
-
-                Task::none()
-            }
-            DeleteTodo(index) => {
-                self.todos.remove(index);
-
-                storage::save_todos(&self.todos);
-
-                Task::none()
-            }
-            ClearCompletedTodos => {
-                self.todos.retain(|todo| todo.status == TodoStatus::Active);
-                Task::none()
-            }
-            TodoFilterChanged(filter) => {
-                self.current_page = AppPage::Tasks(filter);
-
-                Task::none()
-            }
-            TodoPriorityChanged(index, priority) => {
-                let todo = &mut self.todos[index];
-
-                todo.priority = priority;
-                storage::save_todos(&self.todos);
-
-                Task::none()
-            }
-            TodoPriorityAdded(priority) => {
-                self.new_todo_priority = priority;
-
-                Task::none()
-            }
-            TodoSortChanged(sort) => {
-                self.todo_sort = sort;
-
-                Task::none()
-            }
-            TodoSearchChanged(search) => {
-                self.todo_search_buffer = search;
-                Task::none()
-            }
+            Todo(todo_msg) => self.update_todo(todo_msg),
         }
     }
 
@@ -293,5 +168,119 @@ impl App {
             .title(Self::title)
             .antialiasing(true)
             .run()
+    }
+}
+
+impl App {
+    fn update_todo(&mut self, todo_msg: TodoMessage) -> Task<AppMessage> {
+        use TodoMessage::*;
+
+        match todo_msg {
+            Add => {
+                if self.todo_input_buffer.trim().is_empty() {
+                    return Task::none();
+                }
+
+                self.todos.push(Todo {
+                    title: self.todo_input_buffer.clone(),
+                    title_state: Viewing,
+                    status: TodoStatus::Active,
+                    priority: self.new_todo_priority,
+                });
+
+                self.todo_input_buffer.clear();
+                self.new_todo_priority = TodoPriority::Medium;
+
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            InputChanged(input) => {
+                self.todo_input_buffer = input;
+                Task::none()
+            }
+            Toggled(index, status) => {
+                let todo = &mut self.todos[index];
+                todo.status = status;
+
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            ShowEdit(index) => {
+                let todo = &mut self.todos[index];
+
+                self.old_todo_title = todo.title.clone();
+                todo.title_state = TodoTitleState::Editing;
+
+                Task::none()
+            }
+            EditChanged(title) => {
+                self.todo_edit_buffer = title;
+
+                Task::none()
+            }
+            Edit(index) => {
+                let todo = &mut self.todos[index];
+
+                todo.title = self.todo_edit_buffer.clone();
+
+                self.todo_edit_buffer.clear();
+                self.old_todo_title.clear();
+                todo.title_state = TodoTitleState::Viewing;
+
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            CancelEdit(usize) => {
+                let todo = &mut self.todos[usize];
+
+                todo.title = self.old_todo_title.clone();
+                self.todo_edit_buffer.clear();
+                self.old_todo_title.clear();
+                todo.title_state = TodoTitleState::Viewing;
+
+                Task::none()
+            }
+            Delete(index) => {
+                self.todos.remove(index);
+
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            ClearCompleted => {
+                self.todos.retain(|todo| todo.status == TodoStatus::Active);
+                Task::none()
+            }
+            FilterChanged(filter) => {
+                self.current_page = AppPage::Tasks(filter);
+
+                Task::none()
+            }
+            PriorityChanged(index, priority) => {
+                let todo = &mut self.todos[index];
+
+                todo.priority = priority;
+                storage::save_todos(&self.todos);
+
+                Task::none()
+            }
+            NewPriorityChanged(priority) => {
+                self.new_todo_priority = priority;
+
+                Task::none()
+            }
+            SortChanged(sort) => {
+                self.todo_sort = sort;
+
+                Task::none()
+            }
+            SearchChanged(search) => {
+                self.todo_search_buffer = search;
+                Task::none()
+            }
+        }
     }
 }

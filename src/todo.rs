@@ -1,6 +1,5 @@
 use iced::Color;
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
 use crate::theme::ThemeColors;
@@ -94,4 +93,24 @@ impl std::fmt::Display for TodoSort {
             TodoSort::CompletedLast => write!(f, "Completed last"),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum TodoMessage {
+    Add,
+    Delete(usize),
+    InputChanged(String),
+    Toggled(usize, TodoStatus),
+    ShowEdit(usize),
+    EditChanged(String),
+    Edit(usize),
+    CancelEdit(usize),
+    ClearCompleted,
+    FilterChanged(TodoFilter),
+    PriorityChanged(usize, TodoPriority),
+    NewPriorityChanged(TodoPriority),
+
+    SortChanged(TodoSort),
+
+    SearchChanged(String),
 }

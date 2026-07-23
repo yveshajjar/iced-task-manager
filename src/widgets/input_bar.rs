@@ -5,20 +5,20 @@ use iced::{Border, Color, Length, Theme};
 
 use crate::app::{App, AppMessage};
 use crate::theme::{AppTheme, ThemeColors};
-use crate::todo::{Todo, TodoPriority, TodoStatus};
+use crate::todo::{Todo, TodoMessage, TodoPriority, TodoStatus};
 
-pub fn input_bar<'a>(app: &'a App, todo_input: &str) -> iced::Element<'a, AppMessage> {
+pub fn input_bar<'a>(app: &'a App, todo_input: &str) -> iced::Element<'a, TodoMessage> {
     let window_ratio = app.window_ratio;
     let theme_colors = app.theme.colors();
 
     let input_text = iced::widget::text_input("Enter new todo", todo_input)
-        .on_input(AppMessage::TodoInputChanged)
+        .on_input(TodoMessage::InputChanged)
         .style(move |_, status| input_text_style(theme_colors, status));
 
     let priority_card = iced::widget::PickList::new(
         [TodoPriority::High, TodoPriority::Medium, TodoPriority::Low],
         Some(app.new_todo_priority),
-        AppMessage::TodoPriorityAdded,
+        TodoMessage::NewPriorityChanged,
     )
     .style(move |_, status| {
         picklist_style(theme_colors, app.new_todo_priority, status, window_ratio)
@@ -32,7 +32,7 @@ pub fn input_bar<'a>(app: &'a App, todo_input: &str) -> iced::Element<'a, AppMes
     row![
         input_text,
         priority_card_wrapper,
-        iced::widget::button("Add").on_press(AppMessage::AddTodo)
+        iced::widget::button("Add").on_press(TodoMessage::Add)
     ]
     .spacing(5.0 * window_ratio)
     .width(Length::Fixed(360.0 * window_ratio))

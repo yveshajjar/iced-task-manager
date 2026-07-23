@@ -5,13 +5,14 @@ use iced::{Border, Color, Length, Theme};
 
 use crate::app::{App, AppMessage};
 use crate::theme::{AppTheme, ThemeColors};
+use crate::todo::TodoMessage;
 
-pub fn search_bar<'a>(app: &'a App, todo_search: &str) -> iced::Element<'a, AppMessage> {
+pub fn search_bar<'a>(app: &'a App, todo_search: &str) -> iced::Element<'a, TodoMessage> {
     let window_ratio = app.window_ratio;
     let theme_colors = app.theme.colors();
 
     let search_input = iced::widget::text_input("Search tasks...", todo_search)
-        .on_input(AppMessage::TodoSearchChanged)
+        .on_input(TodoMessage::SearchChanged)
         .style(move |_, status| input_text_style(theme_colors, status));
 
     container(search_input)
